@@ -26,8 +26,12 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# DB files
+# data files
 *.db
+*.lock
+*.npz
+events.out.*
+lightning_logs/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
