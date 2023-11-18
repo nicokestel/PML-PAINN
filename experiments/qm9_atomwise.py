@@ -13,6 +13,8 @@ import pytorch_lightning as pl
 
 #if __name__ == '__main__':
 def run():
+    work_dir = './qm9_atomwise'
+
     qm9atom = load_data('qm9',
                         transformations=[
                             trn.SubtractCenterOfMass(),
@@ -20,9 +22,10 @@ def run():
                             trn.MatScipyNeighborList(cutoff=5.),
                             trn.CastTo32()
                         ],
-                        n_train=100000,
+                        n_train=1000,
                         n_val=1000,
-                        batch_size=100)
+                        batch_size=100,
+                        work_dir=work_dir)
 
     # some insides
     atomrefs = qm9atom.train_dataset.atomrefs
@@ -39,7 +42,7 @@ def run():
 
     # Model Setup (QM9)
     cutoff = 5.  # Angstrom
-    n_atom_basis = 128
+    n_atom_basis = 3  # 128
     n_interactions = 3
 
     pairwise_distance = spk.atomistic.PairwiseDistances() # calculates pairwise distances between atoms
@@ -78,10 +81,10 @@ def run():
     )
 
     # Training + Monitoring + Logging
-    logger = pl.loggers.TensorBoardLogger(save_dir=qm9atom)
+    logger = pl.loggers.TensorBoardLogger(save_dir=work_dir)
     callbacks = [
         spk.train.ModelCheckpoint(
-            model_path=os.path.join(qm9atom, "best_inference_model"),
+            model_path=os.path.join(work_dir, "best_inference_model"),
             save_top_k=1,
             monitor="val_loss"
         )
@@ -90,7 +93,7 @@ def run():
     trainer = pl.Trainer(
         callbacks=callbacks,
         logger=logger,
-        default_root_dir=qm9atom,
+        default_root_dir=work_dir,
         max_epochs=3, # for testing, we restrict the number of epochs
     )
     trainer.fit(task, datamodule=qm9atom)

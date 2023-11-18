@@ -11,16 +11,19 @@ def load_data(dataset,
               transformations=None,
               n_train=None,
               n_val=None,
-              batch_size=100):
+              batch_size=100,
+              work_dir=None):
     
     if dataset.lower() == 'qm9':
-        dataset = __load_qm9_data(transformations=transformations,
+        return __load_qm9_data(transformations=transformations,
                                     n_train=n_train,
                                     n_val=n_val,
-                                    batch_size=batch_size)
-        return dataset
+                                    batch_size=batch_size,
+                                    work_dir=work_dir)
+    
     elif dataset.lower() == 'md17':
         pass
+
     else:
         print('[ERROR] Dataset \'{}\' not supported! Choose one of {}.'.format(dataset, SUPPORTED_DATASETS))
         sys.exit(1)
@@ -29,15 +32,15 @@ def load_data(dataset,
 def __load_qm9_data(transformations=None,
                     n_train=None,
                     n_val=None,
-                    batch_size=100):
+                    batch_size=100,
+                    work_dir=None):
     
     # prepare working directory
-    qm9_atom = './qm9_atomwise'
-    if not os.path.exists(qm9_atom):
-        os.makedirs(qm9_atom)
+    if not os.path.exists(work_dir):
+        os.makedirs(work_dir)
 
     # QM9 data
-    os.system('rm ' + os.path.join(qm9_atom, "split.npz"))
+    os.system('rm ' + os.path.join(work_dir, "split.npz"))
     qm9data = QM9(
         './qm9.db',
         batch_size=batch_size,
@@ -46,9 +49,11 @@ def __load_qm9_data(transformations=None,
         transforms=transformations,
         property_units={QM9.U0: 'eV'},
         num_workers=1,
-        split_file=os.path.join(qm9_atom, "split.npz"),
+        split_file=os.path.join(work_dir, "split.npz"),
         pin_memory=False, # set to false, when not using a GPU
         load_properties=[QM9.U0], #only load U0 property, i.e. inner energy at 0K
     )
     qm9data.prepare_data()
     qm9data.setup()
+
+    return qm9data
