@@ -43,10 +43,9 @@ def run():
     # Model Setup (QM9)
     cutoff = 5.  # Angstrom
     n_atom_basis = 3  # 128
-    n_interactions = 3
+    n_interactions = 3  # 64
 
     pairwise_distance = spk.atomistic.PairwiseDistances() # calculates pairwise distances between atoms
-    # radial_basis = spk.nn.GaussianRBF(n_rbf=20, cutoff=cutoff)
     painn = PaiNN(
         n_atom_basis=       n_atom_basis,
         n_interactions=     n_interactions,
@@ -68,7 +67,8 @@ def run():
         loss_fn=torch.nn.MSELoss(),
         loss_weight=1.,
         metrics={
-            "MAE": torchmetrics.MeanAbsoluteError()
+            "MAE": torchmetrics.MeanAbsoluteError(),
+            "RMSE": torchmetrics.MeanSquaredError(squared=False)
         }
     )
 
@@ -77,7 +77,7 @@ def run():
         model=nnpot,
         outputs=[output_U0],
         optimizer_cls=torch.optim.AdamW,
-        optimizer_args={"lr": 1e-4}
+        optimizer_args={"lr": 5e-4}  # "weight_decay": 0.01 by default
     )
 
     # Training + Monitoring + Logging
@@ -87,6 +87,15 @@ def run():
             model_path=os.path.join(work_dir, "best_inference_model"),
             save_top_k=1,
             monitor="val_loss"
+        ),
+        spk.train.ReduceLROnPlateau(
+            factor=.5,
+            patience=5,
+            smoothing_factor=0.9
+        ),
+        pl.callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=30
         )
     ]
 
