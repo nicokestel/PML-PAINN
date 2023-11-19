@@ -4,7 +4,6 @@ from schnetpack.datasets import QM9
 import schnetpack.transform as trn
 
 from nn import PaiNN
-# from schnetpack.representation import PaiNN
 from data_loader import load_data
 
 import torch
@@ -22,7 +21,7 @@ def run():
                             trn.MatScipyNeighborList(cutoff=5.),
                             trn.CastTo32()
                         ],
-                        n_train=1000,
+                        n_train=1000,  # 100000
                         n_val=1000,
                         batch_size=100,
                         work_dir=work_dir)
@@ -72,12 +71,17 @@ def run():
         }
     )
 
+    #optim = torch.optim.AdamW()
+
     # Training Task
     task = spk.task.AtomisticTask(
         model=nnpot,
         outputs=[output_U0],
         optimizer_cls=torch.optim.AdamW,
-        optimizer_args={"lr": 5e-4}  # "weight_decay": 0.01 by default
+        optimizer_args={"lr": 5e-4},  # "weight_decay": 0.01 by default
+        scheduler_cls=spk.train.ReduceLROnPlateau,
+        scheduler_args={"factor": 0.5, "patience": 5, "smoothing_factor": 0.9},
+        scheduler_monitor="val_loss"
     )
 
     # Training + Monitoring + Logging
@@ -87,11 +91,6 @@ def run():
             model_path=os.path.join(work_dir, "best_inference_model"),
             save_top_k=1,
             monitor="val_loss"
-        ),
-        spk.train.ReduceLROnPlateau(
-            factor=.5,
-            patience=5,
-            smoothing_factor=0.9
         ),
         pl.callbacks.EarlyStopping(
             monitor='val_loss',

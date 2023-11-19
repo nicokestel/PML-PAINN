@@ -1,5 +1,5 @@
 import sys
-from experiments import qm9_atomwise
+from experiments import *
 
 
 SUPPORTED_EXPERIMENTS = ['qm9_atomwise', 'qm9_dipole', 'md17']
