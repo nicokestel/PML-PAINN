@@ -1,1 +1,9 @@
+--extra-index-url https://download.pytorch.org/whl/cu118
 numpy==1.26.0
+torch==2.1.1
+schnetpack==2.0.4
+torchmetrics==1.0.1
+matplotlib==3.8.1
+torchvision
+lightning
+pandas
