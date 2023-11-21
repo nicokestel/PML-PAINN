@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 
 #if __name__ == '__main__':
 def run():
-    work_dir = '/home/space/datasets/qm9_dipole'
+    work_dir = './qm9_dipole'
 
     qm9dipole = load_data('qm9',
                           transformations=[

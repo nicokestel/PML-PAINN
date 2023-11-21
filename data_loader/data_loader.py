@@ -2,12 +2,14 @@ import os
 import sys
 
 from schnetpack.datasets.qm9 import QM9
+from schnetpack.datasets.md17 import MD17
 
 
 SUPPORTED_DATASETS = ['qm9', 'md17']
 
 
 def load_data(dataset,
+              molecule='ethanol',
               transformations=None,
               n_train=None,
               n_val=None,
@@ -22,7 +24,12 @@ def load_data(dataset,
                                work_dir=work_dir)
     
     elif dataset.lower() == 'md17':
-        pass
+        return __load_md17_data(molecule=molecule,
+                                transformations=transformations,
+                                n_train=n_train,
+                                n_val=n_val,
+                                batch_size=batch_size,
+                                work_dir=work_dir)
 
     else:
         print('[ERROR] Dataset \'{}\' not supported! Choose one of {}.'.format(dataset, SUPPORTED_DATASETS))
@@ -42,7 +49,7 @@ def __load_qm9_data(transformations=None,
     # QM9 data
     os.system('rm ' + os.path.join(work_dir, "split.npz"))
     qm9data = QM9(
-        './qm9.db',
+        os.path.join(work_dir, 'qm9.db'),
         batch_size=batch_size,
         num_train=n_train,
         num_val=n_val,
@@ -57,3 +64,30 @@ def __load_qm9_data(transformations=None,
     qm9data.setup()
 
     return qm9data
+
+
+def __load_md17_data(molecule='ethanol',
+                     transformations=None,
+                     n_train=None,
+                     n_val=None,
+                     batch_size=10,
+                     work_dir=None):
+    
+     # prepare working directory
+    if not os.path.exists(work_dir):
+        os.makedirs(work_dir)
+
+    # MD17 data
+    os.system('rm ' + os.path.join(work_dir, molecule + "_split.npz"))
+    ethanol_data = MD17(
+        os.path.join(work_dir, molecule + '.db'),
+        molecule=molecule,
+        batch_size=batch_size,
+        num_train=n_train,
+        num_val=n_val,
+        transforms=transformations,
+        num_workers=1,
+        pin_memory=False # set to false, when not using a GPU
+    )
+    ethanol_data.prepare_data()
+    ethanol_data.setup()

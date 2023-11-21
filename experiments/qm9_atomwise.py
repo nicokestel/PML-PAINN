@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 
 #if __name__ == '__main__':
 def run():
-    work_dir = '/home/space/datasets/qm9_atomwise'
+    work_dir = './qm9_atomwise'
 
     qm9atom = load_data('qm9',
                         transformations=[
