@@ -21,7 +21,7 @@ def run():
                             trn.MatScipyNeighborList(cutoff=5.),
                             trn.CastTo32()
                         ],
-                        n_train=1000,  # 100000
+                        n_train=100000,  # 100000
                         n_val=1000,
                         batch_size=100,
                         work_dir=work_dir)
@@ -41,7 +41,7 @@ def run():
 
     # Model Setup (QM9)
     cutoff = 5.  # Angstrom
-    n_atom_basis = 3  # 128
+    n_atom_basis = 64  # 128
     n_interactions = 3  # 64
 
     pairwise_distance = spk.atomistic.PairwiseDistances() # calculates pairwise distances between atoms
@@ -102,6 +102,6 @@ def run():
         callbacks=callbacks,
         logger=logger,
         default_root_dir=work_dir,
-        max_epochs=3, # for testing, we restrict the number of epochs
+        max_epochs=100, # for testing, we restrict the number of epochs
     )
     trainer.fit(task, datamodule=qm9atom)

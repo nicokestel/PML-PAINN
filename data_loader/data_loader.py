@@ -57,7 +57,7 @@ def __load_qm9_data(transformations=None,
         property_units={QM9.U0: 'eV', QM9.mu: 'Debye'},
         num_workers=1,
         split_file=os.path.join(work_dir, "split.npz"),
-        pin_memory=False, # set to false, when not using a GPU
+        pin_memory=True, # set to false, when not using a GPU
         load_properties=[QM9.U0, QM9.mu], #only load U0 property, i.e. inner energy at 0K
     )
     qm9data.prepare_data()
@@ -87,7 +87,7 @@ def __load_md17_data(molecule='ethanol',
         num_val=n_val,
         transforms=transformations,
         num_workers=1,
-        pin_memory=False # set to false, when not using a GPU
+        pin_memory=True # set to false, when not using a GPU
     )
     ethanol_data.prepare_data()
     ethanol_data.setup()
