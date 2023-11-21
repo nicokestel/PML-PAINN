@@ -16,8 +16,8 @@ def run():
     md17data = load_data('md17',
                          molecule='ethanol',
                          transformations=[
-                             trn.ASENeighborList(cutoff=5.),
-                             trn.RemoveOffsets(MD17.energy, remove_mean=True, remove_atomrefs=False),
+                             trn.SubtractCenterOfMass(),
+                             trn.RemoveOffsets(MD17.energy, remove_mean=True),
                              trn.MatScipyNeighborList(cutoff=5.),
                              trn.CastTo32()
                          ],
@@ -38,14 +38,14 @@ def run():
         radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
         cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
     )
-    pred_e = spk.atomistic.Atomwise(n_in=n_atom_basis, output_key=MD17.energy, aggregation_mode='sum')
+    pred_e = spk.atomistic.Atomwise(n_in=n_atom_basis, output_key=MD17.energy)
     pred_f = spk.atomistic.Forces(energy_key=MD17.energy, force_key=MD17.forces)
 
     nnpot = spk.model.NeuralNetworkPotential(
         representation=painn,
         input_modules=[pairwise_distance],
         output_modules=[pred_e, pred_f],
-        postprocessors=[trn.CastTo64(), trn.AddOffsets(property='energy', add_mean=True)]
+        postprocessors=[trn.CastTo64(), trn.AddOffsets(property=MD17.energy, add_mean=True)]
     )
 
     # Model Output
