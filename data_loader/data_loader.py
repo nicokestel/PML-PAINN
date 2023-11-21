@@ -79,7 +79,7 @@ def __load_md17_data(molecule='ethanol',
 
     # MD17 data
     os.system('rm ' + os.path.join(work_dir, molecule + "_split.npz"))
-    ethanol_data = MD17(
+    md17data = MD17(
         os.path.join(work_dir, molecule + '.db'),
         molecule=molecule,
         batch_size=batch_size,
@@ -87,7 +87,11 @@ def __load_md17_data(molecule='ethanol',
         num_val=n_val,
         transforms=transformations,
         num_workers=1,
+        # split_file=os.path.join(work_dir, "split.npz"),
         pin_memory=True # set to false, when not using a GPU
+        # load_properties=[MD17.energy, MD17.forces]
     )
-    ethanol_data.prepare_data()
-    ethanol_data.setup()
+    md17data.prepare_data()
+    md17data.setup()
+
+    return md17data
