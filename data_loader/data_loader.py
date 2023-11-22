@@ -15,14 +15,14 @@ def load_data(dataset,
               n_val=None,
               batch_size=100,
               work_dir=None):
-    
+
     if dataset.lower() == 'qm9':
         return __load_qm9_data(transformations=transformations,
                                n_train=n_train,
                                n_val=n_val,
                                batch_size=batch_size,
                                work_dir=work_dir)
-    
+
     elif dataset.lower() == 'md17':
         return __load_md17_data(molecule=molecule,
                                 transformations=transformations,
@@ -41,13 +41,13 @@ def __load_qm9_data(transformations=None,
                     n_val=None,
                     batch_size=100,
                     work_dir=None):
-    
+
     # prepare working directory
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
 
     # QM9 data
-    os.system('rm ' + os.path.join(work_dir, "split.npz"))
+    # os.system('rm ' + os.path.join(work_dir, "split.npz"))
     qm9data = QM9(
         os.path.join(work_dir, 'qm9.db'),
         batch_size=batch_size,
@@ -72,13 +72,13 @@ def __load_md17_data(molecule='ethanol',
                      n_val=None,
                      batch_size=10,
                      work_dir=None):
-    
+
      # prepare working directory
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
 
     # MD17 data
-    os.system('rm ' + os.path.join(work_dir, molecule + "_split.npz"))
+    # os.system('rm ' + os.path.join(work_dir, molecule + "_split.npz"))
     md17data = MD17(
         os.path.join(work_dir, molecule + '.db'),
         molecule=molecule,
@@ -86,8 +86,8 @@ def __load_md17_data(molecule='ethanol',
         num_train=n_train,
         num_val=n_val,
         transforms=transformations,
-        num_workers=1,
-        # split_file=os.path.join(work_dir, "split.npz"),
+        num_workers=0,
+        split_file=os.path.join(work_dir, molecule + "_split.npz"),
         pin_memory=True # set to false, when not using a GPU
         # load_properties=[MD17.energy, MD17.forces]
     )

@@ -21,15 +21,15 @@ def run():
                              trn.MatScipyNeighborList(cutoff=5.),
                              trn.CastTo32()
                          ],
-                         n_train=1000,  # 100000
-                         n_val=1000,
+                         n_train=950,  # 950
+                         n_val=50,  # 50
                          batch_size=10,
                          work_dir=work_dir)
-    
+
     # Model Setup (MD17)
     cutoff = 5.  # Angstrom
-    n_atom_basis = 3  # 128
-    n_interactions = 3  # 64
+    n_atom_basis = 128  # 128
+    n_interactions = 3  # 3
 
     pairwise_distance = spk.atomistic.PairwiseDistances() # calculates pairwise distances between atoms
     painn = PaiNN(
@@ -84,7 +84,7 @@ def run():
     logger = pl.loggers.TensorBoardLogger(save_dir=work_dir)
     callbacks = [
         spk.train.ModelCheckpoint(
-            model_path=os.path.join(work_dir, "best_inference_model"),
+            model_path=os.path.join(work_dir, "128_3_200_best_inference_model"),
             save_top_k=1,
             monitor="val_loss"
         ),
@@ -98,6 +98,6 @@ def run():
         callbacks=callbacks,
         logger=logger,
         default_root_dir=work_dir,
-        max_epochs=3, # for testing, we restrict the number of epochs
+        max_epochs=200, # for testing, we restrict the number of epochs
     )
     trainer.fit(task, datamodule=md17data)
