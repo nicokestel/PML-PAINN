@@ -41,8 +41,8 @@ def run():
 
     # Model Setup (QM9)
     cutoff = 5.  # Angstrom
-    n_atom_basis = 64  # 128
-    n_interactions = 3  # 64
+    n_atom_basis = 128  # 128
+    n_interactions = 3  # 3
 
     pairwise_distance = spk.atomistic.PairwiseDistances() # calculates pairwise distances between atoms
     painn = PaiNN(

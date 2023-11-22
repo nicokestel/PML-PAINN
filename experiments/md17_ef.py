@@ -52,7 +52,7 @@ def run():
     output_e = spk.task.ModelOutput(
         name=MD17.energy,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=0.01,
+        loss_weight=0.05,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
@@ -62,7 +62,7 @@ def run():
     output_f = spk.task.ModelOutput(
         name=MD17.forces,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=0.99,
+        loss_weight=0.95,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
