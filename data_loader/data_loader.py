@@ -54,11 +54,11 @@ def __load_qm9_data(transformations=None,
         num_train=n_train,
         num_val=n_val,
         transforms=transformations,
-        property_units={QM9.U0: 'eV', QM9.mu: 'Debye'},
+        # property_units={QM9.U0: 'eV', QM9.mu: 'Debye'},
         num_workers=1,
         split_file=os.path.join(work_dir, "split.npz"),
-        pin_memory=True, # set to false, when not using a GPU
-        load_properties=[QM9.U0, QM9.mu], #only load U0 property, i.e. inner energy at 0K
+        pin_memory=True # set to false, when not using a GPU
+        # load_properties=[QM9.U0, QM9.mu], #only load U0 property, i.e. inner energy at 0K
     )
     qm9data.prepare_data()
     qm9data.setup()
