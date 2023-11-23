@@ -10,11 +10,15 @@ import torch
 import torchmetrics
 import pytorch_lightning as pl
 
-def run():
+
+SUPPORTED_MOLECULES = ['aspirin', 'ethanol', 'malondialdehyde', 'napthalene', 'salicylic acid', 'toluene', 'uracil']
+
+
+def run(molecule='ethanol'):
     work_dir = './md17_ef'
 
     md17data = load_data('md17',
-                         molecule='ethanol',
+                         molecule=molecule,
                          transformations=[
                              trn.SubtractCenterOfMass(),
                              trn.RemoveOffsets(MD17.energy, remove_mean=True),
