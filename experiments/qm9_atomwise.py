@@ -10,14 +10,14 @@ import torch
 import torchmetrics
 import pytorch_lightning as pl
 
-#if __name__ == '__main__':
-def run():
-    work_dir = './qm9_atomwise'
+
+def run(prop=QM9.U0):
+    work_dir = os.path.join('./qm9_atomwise', prop)
 
     qm9atom = load_data('qm9',
                         transformations=[
                             trn.SubtractCenterOfMass(),
-                            trn.RemoveOffsets(QM9.U0, remove_mean=True, remove_atomrefs=True),
+                            trn.RemoveOffsets(prop, remove_mean=True, remove_atomrefs=True),
                             trn.MatScipyNeighborList(cutoff=5.),
                             trn.CastTo32()
                         ],
@@ -27,16 +27,16 @@ def run():
                         work_dir=work_dir)
 
     # some insides
-    atomrefs = qm9atom.train_dataset.atomrefs
-    print('U0 of hyrogen:', atomrefs[QM9.U0][1].item(), 'eV')
-    print('U0 of carbon:', atomrefs[QM9.U0][6].item(), 'eV')
-    print('U0 of oxygen:', atomrefs[QM9.U0][8].item(), 'eV')
+    #atomrefs = qm9atom.train_dataset.atomrefs
+    #print('U0 of hyrogen:', atomrefs[QM9.U0][1].item(), 'eV')
+    #print('U0 of carbon:', atomrefs[QM9.U0][6].item(), 'eV')
+    #print('U0 of oxygen:', atomrefs[QM9.U0][8].item(), 'eV')
 
-    means, stddevs = qm9atom.get_stats(
-        QM9.U0, divide_by_atoms=True, remove_atomref=True
-    )
-    print('Mean atomization energy / atom:', means.item())
-    print('Std. dev. atomization energy / atom:', stddevs.item())
+    #means, stddevs = qm9atom.get_stats(
+    #    QM9.U0, divide_by_atoms=True, remove_atomref=True
+    #)
+    #print('Mean atomization energy / atom:', means.item())
+    #print('Std. dev. atomization energy / atom:', stddevs.item())
 
 
     # Model Setup (QM9)
@@ -51,18 +51,18 @@ def run():
         radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
         cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
     )
-    pred_U0 = spk.atomistic.Atomwise(n_in=n_atom_basis, output_key=QM9.U0)
+    pred = spk.atomistic.Atomwise(n_in=n_atom_basis, output_key=prop)
 
     nnpot = spk.model.NeuralNetworkPotential(
         representation=painn,
         input_modules=[pairwise_distance],
-        output_modules=[pred_U0],
-        postprocessors=[trn.CastTo64(), trn.AddOffsets(QM9.U0, add_mean=True, add_atomrefs=True)]
+        output_modules=[pred],
+        postprocessors=[trn.CastTo64(), trn.AddOffsets(prop, add_mean=True, add_atomrefs=True)]
     )
 
     # Model Output
-    output_U0 = spk.task.ModelOutput(
-        name=QM9.U0,
+    output = spk.task.ModelOutput(
+        name=prop,
         loss_fn=torch.nn.MSELoss(),
         loss_weight=1.,
         metrics={
@@ -76,7 +76,7 @@ def run():
     # Training Task
     task = spk.task.AtomisticTask(
         model=nnpot,
-        outputs=[output_U0],
+        outputs=[output],
         optimizer_cls=torch.optim.AdamW,
         optimizer_args={"lr": 5e-4},  # "weight_decay": 0.01 by default
         scheduler_cls=spk.train.ReduceLROnPlateau,
@@ -88,7 +88,7 @@ def run():
     logger = pl.loggers.TensorBoardLogger(save_dir=work_dir)
     callbacks = [
         spk.train.ModelCheckpoint(
-            model_path=os.path.join(work_dir, "best_inference_model"),
+            model_path=os.path.join(work_dir, "best_inference_model_" + prop),
             save_top_k=1,
             monitor="val_loss"
         ),

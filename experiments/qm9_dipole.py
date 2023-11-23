@@ -11,8 +11,8 @@ import torchmetrics
 import pytorch_lightning as pl
 
 #if __name__ == '__main__':
-def run():
-    work_dir = './qm9_dipole'
+def run(prop=QM9.mu):
+    work_dir = os.path.join('./qm9_dipole', prop)
 
     qm9dipole = load_data('qm9',
                           transformations=[
@@ -20,7 +20,7 @@ def run():
                               trn.MatScipyNeighborList(cutoff=5.),
                               trn.CastTo32()
                           ],
-                          n_train=1000,  # 100000
+                          n_train=100000,  # 100000
                           n_val=1000,
                           batch_size=100,
                           work_dir=work_dir)
@@ -62,7 +62,7 @@ def run():
 
     # Model Output
     output_mu = spk.task.ModelOutput(
-        name=QM9.mu,
+        name=prop,
         loss_fn=torch.nn.MSELoss(),
         loss_weight=1.,
         metrics={
@@ -86,7 +86,7 @@ def run():
     logger = pl.loggers.TensorBoardLogger(save_dir=work_dir)
     callbacks = [
         spk.train.ModelCheckpoint(
-            model_path=os.path.join(work_dir, "best_inference_model"),
+            model_path=os.path.join(work_dir, "best_inference_model_" + prop),
             save_top_k=1,
             monitor="val_loss"
         ),
@@ -100,6 +100,6 @@ def run():
         callbacks=callbacks,
         logger=logger,
         default_root_dir=work_dir,
-        max_epochs=3, # for testing, we restrict the number of epochs
+        max_epochs=100, # for testing, we restrict the number of epochs
     )
     trainer.fit(task, datamodule=qm9dipole)
