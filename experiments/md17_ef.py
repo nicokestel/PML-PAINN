@@ -88,7 +88,7 @@ def run(molecule='ethanol'):
     logger = pl.loggers.TensorBoardLogger(save_dir=work_dir)
     callbacks = [
         spk.train.ModelCheckpoint(
-            model_path=os.path.join(work_dir, "128_3_200_best_inference_model"),
+            model_path=os.path.join(work_dir, "best_inference_model_" + molecule),
             save_top_k=1,
             monitor="val_loss"
         ),
@@ -102,6 +102,6 @@ def run(molecule='ethanol'):
         callbacks=callbacks,
         logger=logger,
         default_root_dir=work_dir,
-        max_epochs=200, # for testing, we restrict the number of epochs
+        max_epochs=50, # for testing, we restrict the number of epochs
     )
     trainer.fit(task, datamodule=md17data)
