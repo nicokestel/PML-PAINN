@@ -86,9 +86,9 @@ def __load_md17_data(molecule='ethanol',
         num_train=n_train,
         num_val=n_val,
         transforms=transformations,
-        num_workers=0,
+        num_workers=1,
         split_file=os.path.join(work_dir, molecule + "_split.npz"),
-        pin_memory=True # set to false, when not using a GPU
+        pin_memory=False # set to false, when not using a GPU
         # load_properties=[MD17.energy, MD17.forces]
     )
     md17data.prepare_data()
