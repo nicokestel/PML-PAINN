@@ -56,11 +56,11 @@ def __load_qm9_data(transformations=None,
         transforms=transformations,
         property_units={
             QM9.mu: "Debye",
-            QM9.alpha: "a0 a0 a0",
+            QM9.alpha: "Ang Ang Ang",
             QM9.homo: "eV",
             QM9.lumo: "eV",
             QM9.gap: "eV",
-            QM9.r2: "a0 a0",
+            QM9.r2: "Ang Ang",
             QM9.zpve: "eV",
             QM9.U0: "eV",
             QM9.U: "eV",
@@ -68,7 +68,7 @@ def __load_qm9_data(transformations=None,
             QM9.G: "eV",
             QM9.Cv: "cal/mol/K"
         },
-        num_workers=1,
+        num_workers=3,
         split_file=os.path.join(work_dir, "split.npz"),
         pin_memory=True # set to false, when not using a GPU
         # load_properties=[QM9.U0, QM9.mu], #only load U0 property, i.e. inner energy at 0K
@@ -98,8 +98,9 @@ def __load_md17_data(molecule='ethanol',
         batch_size=batch_size,
         num_train=n_train,
         num_val=n_val,
+        property_units={MD17.energy:"kcal/mol", MD17.forces:"kcal/mol/Ang"},
         transforms=transformations,
-        num_workers=1,
+        num_workers=3,
         split_file=os.path.join(work_dir, molecule + "_split.npz"),
         pin_memory=False # set to false, when not using a GPU
         # load_properties=[MD17.energy, MD17.forces]

@@ -1,6 +1,8 @@
 import os
 import copy
 
+from data_loader import load_data
+
 import torch
 import torch.nn.functional as F
 from torch.utils.data import random_split
@@ -17,8 +19,6 @@ from schnetpack.interfaces.ase_interface import SpkCalculator
 
 from schnetpack.units import convert_units
 
-from data_loader import load_data
-
 
 def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     # set device
@@ -28,6 +28,7 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     model_path = os.path.join(path_to_model)
     best_model = torch.load(model_path, map_location=device)
     best_model.eval()
+    #best_model.inference_mode=True
 
     # set up converter
     # converter = spk.interfaces.AtomsConverter(
@@ -42,16 +43,15 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     dataset = load_data('md17',
                         molecule=molecule,
                         transformations=[
-                            trn.SubtractCenterOfMass(),
-                            trn.RemoveOffsets(MD17.energy, remove_mean=True),
-                            trn.MatScipyNeighborList(cutoff=5.),
+                            trn.ASENeighborList(cutoff=5.),
+                            trn.RemoveOffsets(MD17.energy, remove_mean=True, remove_atomrefs=False),
                             trn.CastTo32()
                         ],
                         n_train=950,  # 950
                         n_val=50,  # 50
                         batch_size=10,
                         work_dir=path_to_data_dir)
-    
+
     #print(dataset.test_idx)
 
     # create atoms object from dataset
@@ -61,17 +61,19 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
 
     # compute MAE
     energy_avg_mae, forces_avg_mae = 0.0, 0.0
-    for batch in dataset.test_dataloader():
+    for bi, batch in enumerate(dataset.test_dataloader()):
+        if bi % 1 == 0:
+            print(str(bi+1), '/', n_test)
         if i == 0:
             break
 
-        print(batch['energy'])
         results = best_model(copy.deepcopy(batch))
 
         # convert units
         # forces stays same
-        results['energy'] *= convert_units("kcal/mol", "eV")
+        # results['energy'] *= convert_units("kcal/mol", "eV")
 
+        print(batch['energy'])
         energy_avg_mae += F.l1_loss(results['energy'], batch['energy'])
         forces_avg_mae += F.l1_loss(results['forces'], batch['forces'])
         i -= 1

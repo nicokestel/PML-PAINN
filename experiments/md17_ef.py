@@ -15,14 +15,13 @@ SUPPORTED_MOLECULES = ['aspirin', 'ethanol', 'malondialdehyde', 'napthalene', 's
 
 
 def run(molecule='ethanol'):
-    work_dir = './md17_ef'
+    work_dir = './md17_ef_tut'
 
     md17data = load_data('md17',
                          molecule=molecule,
                          transformations=[
-                             trn.SubtractCenterOfMass(),
-                             trn.RemoveOffsets(MD17.energy, remove_mean=True),
-                             trn.MatScipyNeighborList(cutoff=5.),
+                             trn.ASENeighborList(cutoff=5.),
+                             trn.RemoveOffsets(MD17.energy, remove_mean=True, remove_atomrefs=False),
                              trn.CastTo32()
                          ],
                          n_train=950,  # 950
@@ -49,7 +48,7 @@ def run(molecule='ethanol'):
         representation=painn,
         input_modules=[pairwise_distance],
         output_modules=[pred_e, pred_f],
-        postprocessors=[trn.CastTo64(), trn.AddOffsets(property=MD17.energy, add_mean=True)]
+        postprocessors=[trn.CastTo64(), trn.AddOffsets(property=MD17.energy, add_mean=True, add_atomrefs=False)]
     )
 
     # Model Output

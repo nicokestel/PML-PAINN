@@ -20,10 +20,9 @@ def run():
 
     qm9 = load_data('qm9',
                     transformations=[
-                        trn.SubtractCenterOfMass(),
+                        trn.ASENeighborList(cutoff=5.),
                         *[trn.RemoveOffsets(prop, remove_mean=True, remove_atomrefs=True) for prop in QM9_ATOMWISE_PROPERTIES
                           ],
-                        trn.MatScipyNeighborList(cutoff=5.),
                         trn.CastTo32()
                     ],
                     n_train=100000,  # 100000
@@ -74,7 +73,7 @@ def run():
     outputs_atomwise = [spk.task.ModelOutput(
         name=prop,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=1.,
+        loss_weight=1./(len(QM9_ATOMWISE_PROPERTIES)+1),
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
@@ -85,7 +84,7 @@ def run():
     output_mu = spk.task.ModelOutput(
         name=QM9.mu,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=1.,
+        loss_weight=1./(len(QM9_ATOMWISE_PROPERTIES)+1),
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
