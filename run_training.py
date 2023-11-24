@@ -16,19 +16,7 @@ if __name__ == '__main__':
         molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
         md17_ef.run(molecule)
     elif expmt == 'qm9':
-        prop = sys.argv[2] or 'U0'
-        if hasattr(QM9, prop):
-            if prop != 'mu' and prop != 'r2':
-                # atomwise
-                qm9_atomwise.run(prop)
-            else:
-                # not atomwise
-                if prop == 'mu':
-                    qm9_dipole.run(prop)
-                elif prop == 'r2':
-                    print('QM9 r2')
-        else:
-            print('[ERROR] QM9 property <{}> not supported!'.format(expmt))
+        qm9.run()
     else:
         print('[ERROR] experiment <{}> not supported! Choose one of {}'.format(expmt, SUPPORTED_EXPERIMENTS))
 
