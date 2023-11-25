@@ -16,7 +16,8 @@ if __name__ == '__main__':
         molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
         md17_ef.run(molecule)
     elif expmt == 'qm9':
-        qm9.run()
+        prop = sys.argv[2] if len(sys.argv) >= 3 else 'energy_U0'
+        qm9.run(prop)
     else:
         print('[ERROR] experiment <{}> not supported! Choose one of {}'.format(expmt, SUPPORTED_EXPERIMENTS))
 

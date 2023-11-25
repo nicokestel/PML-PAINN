@@ -1,28 +1,28 @@
 import os
+
+import pytorch_lightning as pl
 import schnetpack as spk
-from schnetpack.datasets import QM9
 import schnetpack.transform as trn
-
-from nn import PaiNN
-from data_loader import load_data
-
 import torch
 import torchmetrics
-import pytorch_lightning as pl
+from schnetpack.datasets import QM9
+
+from data_loader import load_data
+from nn import PaiNN
 
 
 QM9_ATOMWISE_PROPERTIES = [QM9.gap, QM9.zpve,
                            QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv, QM9.alpha]
 
 
-def run():
-    work_dir = os.path.join('./qm9')
+def run(prop=QM9.U0):
+    work_dir = os.path.join('./qm9', prop)
 
     qm9 = load_data('qm9',
                     transformations=[
                         trn.ASENeighborList(cutoff=5.),
-                        *[trn.RemoveOffsets(prop, remove_mean=True, remove_atomrefs=True) for prop in [QM9.zpve, QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv]
-                          ],
+                        trn.RemoveOffsets(
+                            prop, remove_mean=True, remove_atomrefs=True),
                         trn.CastTo32()
                     ],
                     n_train=100000,  # 100000
@@ -55,22 +55,26 @@ def run():
         radial_basis=spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
         cutoff_fn=spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
     )
-    preds_atomwise = [spk.atomistic.Atomwise(
-        n_in=n_atom_basis, output_key=prop) for prop in QM9_ATOMWISE_PROPERTIES]
-    pred_mu = spk.atomistic.DipoleMoment(
-        n_in=n_atom_basis, predict_magnitude=True, use_vector_representation=True)
+
+    pred = None
+    if prop == QM9.mu:
+        pred = spk.atomistic.DipoleMoment(
+            n_in=n_atom_basis, predict_magnitude=True, use_vector_representation=True)
+    else:
+        pred = spk.atomistic.Atomwise(
+            n_in=n_atom_basis, output_key=prop)
     # pred_r2 = spk.
 
     nnpot = spk.model.NeuralNetworkPotential(
         representation=painn,
         input_modules=[pairwise_distance],
-        output_modules=preds_atomwise + pred_mu,
-        postprocessors=[trn.CastTo64(), *[trn.AddOffsets(prop, add_mean=True,
-                                                         add_atomrefs=True) for prop in [QM9.zpve, QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv]]]
+        output_modules=[pred],
+        postprocessors=[trn.CastTo64(), trn.AddOffsets(
+            prop, add_mean=True, add_atomrefs=True)]
     )
 
     # Model Output
-    outputs_atomwise = [spk.task.ModelOutput(
+    output = spk.task.ModelOutput(
         name=prop,
         loss_fn=torch.nn.MSELoss(),
         loss_weight=1.0,
@@ -78,27 +82,12 @@ def run():
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
         }
-    ) for prop in QM9_ATOMWISE_PROPERTIES
-    ]
-
-    output_mu = spk.task.ModelOutput(
-        name=QM9.mu,
-        loss_fn=torch.nn.MSELoss(),
-        loss_weight=1.0,
-        metrics={
-            "MAE": torchmetrics.MeanAbsoluteError(),
-            "RMSE": torchmetrics.MeanSquaredError(squared=False)
-        }
     )
-
-    print('model set')
-
-    # optim = torch.optim.AdamW()
 
     # Training Task
     task = spk.task.AtomisticTask(
         model=nnpot,
-        outputs=outputs_atomwise + [output_mu],
+        outputs=[output],
         optimizer_cls=torch.optim.AdamW,
         optimizer_args={"lr": 5e-4},  # "weight_decay": 0.01 by default
         scheduler_cls=spk.train.ReduceLROnPlateau,
@@ -126,5 +115,4 @@ def run():
         default_root_dir=work_dir,
         max_epochs=3,  # for testing, we restrict the number of epochs
     )
-    print(len(qm9.train_dataset), len(qm9.val_dataset), len(qm9.test_dataset))
     trainer.fit(task, datamodule=qm9)
