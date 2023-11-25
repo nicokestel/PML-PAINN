@@ -56,18 +56,20 @@ def __load_qm9_data(transformations=None,
         transforms=transformations,
         property_units={
             QM9.mu: "Debye",
-            QM9.alpha: "Ang Ang Ang",
+            #QM9.alpha: "Angstrom Angstrom Angstrom",
             QM9.homo: "eV",
             QM9.lumo: "eV",
             QM9.gap: "eV",
-            QM9.r2: "Ang Ang",
+            #QM9.r2: "Angstrom Angstrom",
             QM9.zpve: "eV",
             QM9.U0: "eV",
             QM9.U: "eV",
             QM9.H: "eV",
             QM9.G: "eV",
-            QM9.Cv: "cal/mol/K"
+            #QM9.Cv: "cal/mol/K"
         },
+        load_properties=[QM9.mu, QM9.homo, QM9.lumo, QM9.gap, QM9.zpve, QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv],
+        remove_uncharacterized=True,
         num_workers=3,
         split_file=os.path.join(work_dir, "split.npz"),
         pin_memory=True # set to false, when not using a GPU

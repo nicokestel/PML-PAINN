@@ -11,8 +11,8 @@ import torchmetrics
 import pytorch_lightning as pl
 
 
-QM9_ATOMWISE_PROPERTIES = [QM9.alpha, QM9.homo, QM9.lumo,
-                           QM9.gap, QM9.zpve, QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv]
+QM9_ATOMWISE_PROPERTIES = [QM9.gap, QM9.zpve,
+                           QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv, QM9.alpha]
 
 
 def run():
@@ -21,7 +21,7 @@ def run():
     qm9 = load_data('qm9',
                     transformations=[
                         trn.ASENeighborList(cutoff=5.),
-                        *[trn.RemoveOffsets(prop, remove_mean=True, remove_atomrefs=True) for prop in QM9_ATOMWISE_PROPERTIES
+                        *[trn.RemoveOffsets(prop, remove_mean=True, remove_atomrefs=True) for prop in [QM9.zpve, QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv]
                           ],
                         trn.CastTo32()
                     ],
@@ -66,14 +66,14 @@ def run():
         input_modules=[pairwise_distance],
         output_modules=preds_atomwise + pred_mu,
         postprocessors=[trn.CastTo64(), *[trn.AddOffsets(prop, add_mean=True,
-                                                         add_atomrefs=True) for prop in QM9_ATOMWISE_PROPERTIES]]
+                                                         add_atomrefs=True) for prop in [QM9.zpve, QM9.U0, QM9.U, QM9.H, QM9.G, QM9.Cv]]]
     )
 
     # Model Output
     outputs_atomwise = [spk.task.ModelOutput(
         name=prop,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=1./(len(QM9_ATOMWISE_PROPERTIES)+1),
+        loss_weight=1.0,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
@@ -84,19 +84,21 @@ def run():
     output_mu = spk.task.ModelOutput(
         name=QM9.mu,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=1./(len(QM9_ATOMWISE_PROPERTIES)+1),
+        loss_weight=1.0,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
         }
     )
 
+    print('model set')
+
     # optim = torch.optim.AdamW()
 
     # Training Task
     task = spk.task.AtomisticTask(
         model=nnpot,
-        outputs=outputs_atomwise + output_mu,
+        outputs=outputs_atomwise + [output_mu],
         optimizer_cls=torch.optim.AdamW,
         optimizer_args={"lr": 5e-4},  # "weight_decay": 0.01 by default
         scheduler_cls=spk.train.ReduceLROnPlateau,
@@ -124,4 +126,5 @@ def run():
         default_root_dir=work_dir,
         max_epochs=3,  # for testing, we restrict the number of epochs
     )
+    print(len(qm9.train_dataset), len(qm9.val_dataset), len(qm9.test_dataset))
     trainer.fit(task, datamodule=qm9)
