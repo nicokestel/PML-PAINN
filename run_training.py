@@ -2,7 +2,7 @@ import sys
 from experiments import *
 
 
-SUPPORTED_EXPERIMENTS = ['qm9', 'md17_ef']
+SUPPORTED_EXPERIMENTS = ['qm9', 'md17_ef', 'baseline']
 
 
 if __name__ == '__main__':
@@ -18,6 +18,9 @@ if __name__ == '__main__':
     elif expmt == 'qm9':
         prop = sys.argv[2] if len(sys.argv) >= 3 else 'energy_U0'
         qm9.run(prop)
+    elif expmt == 'baseline':
+        molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
+        baseline.run(molecule)
     else:
         print('[ERROR] experiment <{}> not supported! Choose one of {}'.format(expmt, SUPPORTED_EXPERIMENTS))
 
