@@ -27,6 +27,7 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     print(best_model)
 
     # load dataset
+    bs = 10
     dataset = load_data('md17',
                         molecule=molecule,
                         transformations=[
@@ -37,13 +38,14 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
                         ],
                         n_train=950,  # 950
                         n_val=50,  # 50
-                        batch_size=10,
+                        batch_size=bs,
                         work_dir=path_to_data_dir)
 
     # print(dataset.test_idx)
 
     # create atoms object from dataset
     # splits = random_split(dataset.test_dataset, [1/3, 1/3, 1/3])
+    n_atoms = dataset.train_dataset[0]['_n_atoms'].item()
     n_test = i = 100
     # splits = dataset.test_dataset[:n_test//3], dataset.test_dataset[n_test//3 : 2*n_test//3], dataset.test_dataset[2*n_test//3:]
 
@@ -54,18 +56,19 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
         if i == 0:
             break
 
-        batch = b['forces'].view(10, -1).clone().detach().to(device)
-        pred = best_model(batch)
+        batch = b['_positions'].view(bs, n_atoms, -1).clone().detach().to(device)
+        cdist = torch.cdist(batch, batch).view(bs, -1).to(device)
+        pred = best_model(cdist).cpu()
 
         # convert units
         # forces stays same
         # results['energy'] *= convert_units("kcal/mol", "eV")
 
         # MAE
-        forces_avg_mae += F.l1_loss(pred, batch)
+        forces_avg_mae += F.l1_loss(pred, pred)
 
         # MSE
-        forces_avg_mse += F.mse_loss(pred, batch)
+        forces_avg_mse += F.mse_loss(pred, pred)
 
         i -= 1
 
