@@ -15,7 +15,7 @@ SUPPORTED_MOLECULES = ['aspirin', 'ethanol', 'malondialdehyde', 'napthalene', 's
 
 
 def run(molecule='ethanol'):
-    work_dir = './md17_ef_tut'
+    work_dir = './md17_ef'
 
     md17data = load_data('md17',
                          molecule=molecule,
@@ -101,6 +101,6 @@ def run(molecule='ethanol'):
         callbacks=callbacks,
         logger=logger,
         default_root_dir=work_dir,
-        max_epochs=50, # for testing, we restrict the number of epochs
+        max_epochs=10000, # for testing, we restrict the number of epochs
     )
     trainer.fit(task, datamodule=md17data)

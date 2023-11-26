@@ -56,14 +56,13 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
 
     # create atoms object from dataset
     # splits = random_split(dataset.test_dataset, [1/3, 1/3, 1/3])
-    n_test = i = 10
+    n_test = i = 100
     # splits = dataset.test_dataset[:n_test//3], dataset.test_dataset[n_test//3 : 2*n_test//3], dataset.test_dataset[2*n_test//3:]
 
     # compute MAE
     energy_avg_mae, forces_avg_mae = 0.0, 0.0
-    for bi, batch in enumerate(dataset.test_dataloader()):
-        if bi % 1 == 0:
-            print(str(bi+1), '/', n_test)
+    energy_avg_mse, forces_avg_mse = 0.0, 0.0
+    for _, batch in enumerate(dataset.test_dataloader()):
         if i == 0:
             break
 
@@ -73,16 +72,27 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
         # forces stays same
         # results['energy'] *= convert_units("kcal/mol", "eV")
 
-        print(batch['energy'])
+        # MAE
         energy_avg_mae += F.l1_loss(results['energy'], batch['energy'])
         forces_avg_mae += F.l1_loss(results['forces'], batch['forces'])
+
+        # MSE
+        energy_avg_mse += F.mse_loss(results['energy'], batch['energy'])
+        forces_avg_mse += F.mse_loss(results['forces'], batch['forces'])
+
         i -= 1
 
 
     energy_avg_mae /= n_test
     forces_avg_mae /= n_test
+    energy_avg_mse /= n_test
+    forces_avg_mse /= n_test
 
     print('MAE on energy: {:.3f}'.format(
         energy_avg_mae))
     print('MAE on forces: {:.3f}'.format(
         forces_avg_mae))
+    print('MSE on energy: {:.3f}'.format(
+        energy_avg_mse))
+    print('MSE on forces: {:.3f}'.format(
+        forces_avg_mse))

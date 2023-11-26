@@ -68,8 +68,8 @@ def __load_qm9_data(transformations=None,
             QM9.G: "eV",
             #QM9.Cv: "cal/mol/K"
         },
-        remove_uncharacterized=True,
-        num_workers=3,
+        remove_uncharacterized=False,
+        num_workers=0,
         split_file=os.path.join(work_dir, "split.npz"),
         pin_memory=True # set to false, when not using a GPU
         # load_properties=[QM9.U0, QM9.mu], #only load U0 property, i.e. inner energy at 0K
