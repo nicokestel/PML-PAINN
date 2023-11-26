@@ -17,7 +17,7 @@ from schnetpack.datasets.md17 import MD17
 
 def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     # set device
-    device = torch.device("cpu")
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # load model
     model_path = os.path.join(path_to_model)
@@ -64,11 +64,13 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
         # forces stays same
         # results['energy'] *= convert_units("kcal/mol", "eV")
 
+        f_mag = torch.linalg.norm(b['forces'].view(bs, n_atoms, 3), dim=-1)
+
         # MAE
-        forces_avg_mae += F.l1_loss(pred, pred)
+        forces_avg_mae += F.l1_loss(pred, f_mag)
 
         # MSE
-        forces_avg_mse += F.mse_loss(pred, pred)
+        forces_avg_mse += F.mse_loss(pred, f_mag)
 
         i -= 1
 

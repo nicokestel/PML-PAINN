@@ -17,11 +17,11 @@ class MLP(nn.Module):
     def forward(self, X):
 
         X = self.lin_in(X)
-        # X = torch.sigmoid(X)
+        X = torch.relu(X)
 
         for hidden_layer in self.lin_hid:
             X = hidden_layer(X)
-            # X = torch.sigmoid(X)
+            X = torch.relu(X)
 
         X = self.lin_out(X)
 

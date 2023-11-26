@@ -41,14 +41,14 @@ def run(molecule='ethanol'):
     n_atoms = md17data.train_dataset[0]['_n_atoms'].item()
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     mlp = MLP(in_dim=n_atoms * n_atoms,
-              hidden_dims=[2048, 2048, 512],
+              hidden_dims=[2048, 2048, 2048],
               out_dim=n_atoms)
     mlp.to(device)
     print(mlp)
 
     # setup optimizer and training
     optim = AdamW(mlp.parameters())
-    epochs = 20
+    epochs = 200
     valid_losses = {'mae': [], 'mse': []}
 
     # start training
@@ -60,7 +60,7 @@ def run(molecule='ethanol'):
             batch = b['_positions'].view(bs, n_atoms, -1).clone().detach().to(device)
             cdist = torch.cdist(batch, batch).view(bs, -1).to(device)
             #print(cdist.shape)
-            pred = mlp(cdist)
+            pred = mlp(cdist).cpu()
             #print(pred.shape)
 
             f_mag = torch.linalg.norm(b['forces'].view(bs, n_atoms, 3), dim=-1)
@@ -85,7 +85,7 @@ def run(molecule='ethanol'):
         for batch_id, b in enumerate(val_dl):
             batch = b['_positions'].view(bs, n_atoms, -1).clone().detach().to(device)
             cdist = torch.cdist(batch, batch).view(bs, -1).to(device)
-            pred = mlp(cdist)
+            pred = mlp(cdist).cpu()
 
             f_mag = torch.linalg.norm(b['forces'].view(bs, n_atoms, 3), dim=-1)
 
