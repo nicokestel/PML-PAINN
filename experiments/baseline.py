@@ -12,14 +12,21 @@ from nn.mlp import MLP
 from schnetpack.datasets.md17 import MD17
 
 def run(molecule='ethanol'):
-    work_dir = './mlp_baseline'
+    """Loads the MD17 dataset, sets up the MLP model for the specified
+        molecule and starts training with predefined hyperparameters.
 
+    Args:
+        molecule: (default: 'ethanol')
+    """
+
+    work_dir = './mlp_baseline'
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
 
+    # batch size
     bs = 10
 
-    # dataset
+    # Load MD17 data
     md17data = load_data('md17',
                          molecule=molecule,
                          transformations=[
@@ -37,8 +44,9 @@ def run(molecule='ethanol'):
     val_dl = md17data.val_dataloader()
 
     # MLP
-    n_atoms = md17data.train_dataset[0]['_n_atoms'].item()
+    n_atoms = md17data.train_dataset[0]['_n_atoms'].item()  # n_atoms might vary from molecule to molecule
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     mlp = MLP(in_dim=n_atoms * n_atoms,
               hidden_dims=[2048, 2048, 2048],
               out_dim=n_atoms)
@@ -56,14 +64,15 @@ def run(molecule='ethanol'):
         # training epoch
         mlp.train()
         for batch_id, b in enumerate(train_dl):
+
+            # calculate pairwise distances
             batch = b['_positions'].view(bs, n_atoms, -1).clone().detach().to(device)
             cdist = torch.cdist(batch, batch).view(bs, -1).to(device)
-            #print(cdist.shape)
+            
             pred = mlp(cdist).cpu()
-            #print(pred.shape)
 
+            # magnitude of forces
             f_mag = torch.linalg.norm(b['forces'].view(bs, n_atoms, 3), dim=-1)
-            #print(f_mag.shape)
             loss = nn.functional.l1_loss(pred, f_mag)  # MAE
 
             optim.zero_grad()
@@ -82,10 +91,14 @@ def run(molecule='ethanol'):
         valid_mse_loss = 0.0
         best_loss = torch.inf
         for batch_id, b in enumerate(val_dl):
+
+            # calculate pairwise distances
             batch = b['_positions'].view(bs, n_atoms, -1).clone().detach().to(device)
             cdist = torch.cdist(batch, batch).view(bs, -1).to(device)
-            pred = mlp(cdist).cpu()
 
+            pred = mlp(cdist).cpu()
+            
+            # magnitude of forces
             f_mag = torch.linalg.norm(b['forces'].view(bs, n_atoms, 3), dim=-1)
 
             mae_loss = nn.functional.l1_loss(pred, f_mag)  # MAE

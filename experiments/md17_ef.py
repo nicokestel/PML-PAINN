@@ -15,8 +15,20 @@ SUPPORTED_MOLECULES = ['aspirin', 'ethanol', 'malondialdehyde', 'napthalene', 's
 
 
 def run(molecule='ethanol'):
-    work_dir = './md17_ef'
+    """Loads the MD17 dataset, sets up the PaiNN model for the specified
+        molecule and starts training with predefined hyperparameters.
 
+    Args:
+        molecule: (default: 'ethanol')
+
+    References:
+    .. [#painn1] Schütt, Unke, Gastegger:
+       Equivariant message passing for the prediction of tensorial properties and molecular spectra.
+       ICML 2021, http://proceedings.mlr.press/v139/schutt21a.html
+    """
+
+    # Load MD17 data
+    work_dir = './md17_ef'
     md17data = load_data('md17',
                          molecule=molecule,
                          transformations=[
@@ -34,6 +46,7 @@ def run(molecule='ethanol'):
     n_atom_basis = 128  # 128
     n_interactions = 3  # 3
 
+    # calculates pairwise distances between atoms
     pairwise_distance = spk.atomistic.PairwiseDistances() # calculates pairwise distances between atoms
     painn = PaiNN(
         n_atom_basis=       n_atom_basis,
@@ -41,6 +54,8 @@ def run(molecule='ethanol'):
         radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
         cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
     )
+
+    # prediction modules for energy and forces
     pred_e = spk.atomistic.Atomwise(n_in=n_atom_basis, output_key=MD17.energy)
     pred_f = spk.atomistic.Forces(energy_key=MD17.energy, force_key=MD17.forces)
 
@@ -61,7 +76,6 @@ def run(molecule='ethanol'):
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
         }
     )
-
     output_f = spk.task.ModelOutput(
         name=MD17.forces,
         loss_fn=torch.nn.MSELoss(),
@@ -101,6 +115,6 @@ def run(molecule='ethanol'):
         callbacks=callbacks,
         logger=logger,
         default_root_dir=work_dir,
-        max_epochs=10000, # for testing, we restrict the number of epochs
+        max_epochs=10000,
     )
     trainer.fit(task, datamodule=md17data)

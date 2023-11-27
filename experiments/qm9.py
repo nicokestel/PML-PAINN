@@ -16,8 +16,20 @@ QM9_ATOMWISE_PROPERTIES = [QM9.gap, QM9.zpve,
 
 
 def run(prop=QM9.U0):
-    work_dir = os.path.join('./qm9', prop)
+    """Loads the QM9 dataset, sets up the PaiNN model for the specified
+        property and starts training with predefined hyperparameters.
 
+    Args:
+        prop: (default: 'energy_U0')
+
+    References:
+    .. [#painn1] Schütt, Unke, Gastegger:
+       Equivariant message passing for the prediction of tensorial properties and molecular spectra.
+       ICML 2021, http://proceedings.mlr.press/v139/schutt21a.html
+    """
+
+    # Load QM9 data
+    work_dir = os.path.join('./qm9', prop)
     qm9 = load_data('qm9',
                     transformations=[
                         trn.ASENeighborList(cutoff=5.),
@@ -29,18 +41,6 @@ def run(prop=QM9.U0):
                     n_val=1000,
                     batch_size=100,
                     work_dir=work_dir)
-
-    # some insides
-    # atomrefs = qm9atom.train_dataset.atomrefs
-    # print('U0 of hyrogen:', atomrefs[QM9.U0][1].item(), 'eV')
-    # print('U0 of carbon:', atomrefs[QM9.U0][6].item(), 'eV')
-    # print('U0 of oxygen:', atomrefs[QM9.U0][8].item(), 'eV')
-
-    # means, stddevs = qm9atom.get_stats(
-    #    QM9.U0, divide_by_atoms=True, remove_atomref=True
-    # )
-    # print('Mean atomization energy / atom:', means.item())
-    # print('Std. dev. atomization energy / atom:', stddevs.item())
 
     # Model Setup (QM9)
     cutoff = 5.  # Angstrom
@@ -56,6 +56,7 @@ def run(prop=QM9.U0):
         cutoff_fn=spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
     )
 
+    # prediction module corresponding to specified prop
     pred = None
     if prop == QM9.mu:
         pred = spk.atomistic.DipoleMoment(
@@ -113,6 +114,6 @@ def run(prop=QM9.U0):
         callbacks=callbacks,
         logger=logger,
         default_root_dir=work_dir,
-        max_epochs=3,  # for testing, we restrict the number of epochs
+        max_epochs=3,
     )
     trainer.fit(task, datamodule=qm9)
