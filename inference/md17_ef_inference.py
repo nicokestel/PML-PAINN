@@ -5,22 +5,25 @@ from data_loader import load_data
 
 import torch
 import torch.nn.functional as F
-from torch.utils.data import random_split
 
-import numpy as np
-from ase import Atoms
 
 import schnetpack as spk
 import schnetpack.transform as trn
 
 from schnetpack.datasets.md17 import MD17
-# from schnetpack.data.loader import AtomsLoader
-from schnetpack.interfaces.ase_interface import SpkCalculator
 
 from schnetpack.units import convert_units
 
 
 def run(path_to_model, path_to_data_dir, molecule='ethanol'):
+    """ Evaluates the specified PaiNN model on MD17.
+
+        Args:
+            path_to_model: where the model is stored.
+            path_to_data_dir: where the data is stored.
+            molecule: (default: 'ethanol').
+    """
+
     # set device
     device = torch.device("cpu")
 
@@ -28,18 +31,8 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     model_path = os.path.join(path_to_model)
     best_model = torch.load(model_path, map_location=device)
     best_model.eval()
-    #best_model.inference_mode=True
 
-    # set up converter
-    # converter = spk.interfaces.AtomsConverter(
-    #     neighbor_list=trn.ASENeighborList(cutoff=5.0), dtype=torch.float32, device=device
-    # )
-
-    calculator = spk.interfaces.SpkCalculator(
-        path_to_model, trn.ASENeighborList(cutoff=5.0), dtype=torch.float32, device=device
-    )
-
-    # load dataset
+    # load MD17 data
     dataset = load_data('md17',
                         molecule=molecule,
                         transformations=[
@@ -52,12 +45,8 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
                         batch_size=10,
                         work_dir=path_to_data_dir)
 
-    #print(dataset.test_idx)
-
-    # create atoms object from dataset
-    # splits = random_split(dataset.test_dataset, [1/3, 1/3, 1/3])
+   
     n_test = i = 100
-    # splits = dataset.test_dataset[:n_test//3], dataset.test_dataset[n_test//3 : 2*n_test//3], dataset.test_dataset[2*n_test//3:]
 
     # compute MAE
     energy_avg_mae, forces_avg_mae = 0.0, 0.0
@@ -68,8 +57,7 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
 
         results = best_model(copy.deepcopy(batch))
 
-        # convert units
-        # forces stays same
+        # Convert units
         # results['energy'] *= convert_units("kcal/mol", "eV")
 
         # MAE

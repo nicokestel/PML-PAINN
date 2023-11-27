@@ -1,21 +1,25 @@
 import os
-import copy
 
 from data_loader import load_data
 
 import torch
 import torch.nn.functional as F
 
-import numpy as np
-from ase import Atoms
-
 import schnetpack as spk
 import schnetpack.transform as trn
-
 from schnetpack.datasets.md17 import MD17
+from schnetpack.units import convert_units
 
 
 def run(path_to_model, path_to_data_dir, molecule='ethanol'):
+    """ Evaluates the specified MLP baseline model on MD17.
+
+    Args:
+        path_to_model: where the model is stored.
+        path_to_data_dir: where the data is stored.
+        molecule: (default: 'ethanol').
+    """
+
     # set device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -41,15 +45,10 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
                         batch_size=bs,
                         work_dir=path_to_data_dir)
 
-    # print(dataset.test_idx)
-
-    # create atoms object from dataset
-    # splits = random_split(dataset.test_dataset, [1/3, 1/3, 1/3])
     n_atoms = dataset.train_dataset[0]['_n_atoms'].item()
     n_test = i = 100
-    # splits = dataset.test_dataset[:n_test//3], dataset.test_dataset[n_test//3 : 2*n_test//3], dataset.test_dataset[2*n_test//3:]
 
-    # compute MAE + MSE
+    # Compute MAE + MSE
     forces_avg_mae = 0.0
     forces_avg_mse = 0.0
     for _, b in enumerate(dataset.test_dataloader()):
@@ -60,10 +59,10 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
         cdist = torch.cdist(batch, batch).view(bs, -1).to(device)
         pred = best_model(cdist).cpu()
 
-        # convert units
-        # forces stays same
+        # Copnvert units
         # results['energy'] *= convert_units("kcal/mol", "eV")
 
+        # magnitude of forces
         f_mag = torch.linalg.norm(b['forces'].view(bs, n_atoms, 3), dim=-1)
 
         # MAE
