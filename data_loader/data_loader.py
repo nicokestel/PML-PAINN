@@ -15,6 +15,20 @@ def load_data(dataset,
               n_val=None,
               batch_size=100,
               work_dir=None):
+    """Loads the specified dataset from SchNetPack.
+
+    Args:
+        dataset: dataset to load ('qm9' or 'md17').
+        molecule: if dataset='md17', specifies which molecule structures to load (default: 'ethanol').
+        transformations: list of transformation to apply to each sample in the dataset (default: None).
+        n_train: number of samples in train split (default: None).
+        n_val: number of samples in validation split (default: None).
+        batch_size: number of samples per batch (default: 10).
+        work_dir: the directory to store the dataset in (default: 'None).
+
+    Returns:
+        the dataset object
+    """
 
     if dataset.lower() == 'qm9':
         return __load_qm9_data(transformations=transformations,
@@ -41,6 +55,18 @@ def __load_qm9_data(transformations=None,
                     n_val=None,
                     batch_size=100,
                     work_dir=None):
+    """Loads the QM9 dataset from SchNetPack.
+
+    Args:
+        transformations: list of transformation to apply to each sample in the dataset (default: None).
+        n_train: number of samples in train split (default: None).
+        n_val: number of samples in validation split (default: None).
+        batch_size: number of samples per batch (default: 100).
+        work_dir: the directory to store the dataset in (default: 'None).
+
+    Returns:
+        QM9 dataset object
+    """
 
     # prepare working directory
     if not os.path.exists(work_dir):
@@ -86,6 +112,19 @@ def __load_md17_data(molecule='ethanol',
                      n_val=None,
                      batch_size=10,
                      work_dir=None):
+    """Loads the MD17 dataset from SchNetPack.
+
+    Args:
+        molecule: molecule structures to load (default: 'ethanol').
+        transformations: list of transformation to apply to each sample in the dataset (default: None).
+        n_train: number of samples in train split (default: None).
+        n_val: number of samples in validation split (default: None).
+        batch_size: number of samples per batch (default: 100).
+        work_dir: the directory to store the dataset in (default: 'None).
+
+    Returns:
+        MD17 dataset object
+    """
 
      # prepare working directory
     if not os.path.exists(work_dir):
