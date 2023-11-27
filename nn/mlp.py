@@ -3,8 +3,15 @@ from torch import nn
 
 
 class MLP(nn.Module):
+    r"""Standard Feed-Forward Network for Regression."""
 
     def __init__(self, in_dim, hidden_dims=[512], out_dim=1):
+        """
+        Args:
+            in_dim: number of input neurons.
+            hidden_dims: number of neurons per hidden layer.
+            out_dim: number of output neurons.
+        """
         super(MLP, self).__init__()
 
         assert len(hidden_dims) >= 1
@@ -15,6 +22,14 @@ class MLP(nn.Module):
 
 
     def forward(self, X):
+        """Compute MLP output.
+
+        Args:
+            X: input tensor (batch_size, in_dim)
+
+        Returns:
+            MLP output
+        """
 
         X = self.lin_in(X)
         X = torch.relu(X)

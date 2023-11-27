@@ -1,3 +1,12 @@
+"""
+Examplary calls:
+
+python run_inference.py PML-PAINN/md17_ef/best_inference_model_aspirin PML-PAINN/md17_ef/ aspirin
+    - starts testing the PaiNN model on MD17 energies and forces for the Aspirin molecule.
+
+python run_inference.py PML-PAINN/mlp_baseline/mlp PML-PAINN/md17_ef/ aspirin
+    - starts testing the MLP baseline model on a custom regression task for MD17 forces for the Aspirin molecule.
+"""
 import sys
 from inference import md17_ef_inference
 from inference import baseline_inference

@@ -1,3 +1,7 @@
+"""
+https://github.com/atomistic-machine-learning/schnetpack/blob/master/src/schnetpack/representation/painn.py
+"""
+
 from typing import Callable, Dict, Optional
 
 import torch
