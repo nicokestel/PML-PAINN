@@ -13,7 +13,6 @@ from schnetpack.datasets.md17 import MD17
 
 def run(molecule='ethanol'):
     work_dir = './mlp_baseline'
-    data_dir = './md17_ef'
 
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
@@ -31,7 +30,7 @@ def run(molecule='ethanol'):
                          n_train=950,  # 950
                          n_val=50,  # 50
                          batch_size=bs,
-                         work_dir=data_dir)   
+                         work_dir=work_dir)
     
     # dataloader
     train_dl = md17data.train_dataloader()
@@ -102,7 +101,7 @@ def run(molecule='ethanol'):
         #save model when validation loss is minimum
         if valid_mae_loss < best_loss:
             best_loss = valid_mae_loss
-            torch.save(mlp, os.path.join(work_dir, 'mlp'))
+            torch.save(mlp, os.path.join(work_dir, 'mlp_moredata'))
         
         print('Valid MAE Loss:{:.4f}'.format(valid_mae_loss))
         print('Valid MSE Loss:{:.4f}'.format(valid_mse_loss))
