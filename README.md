@@ -5,7 +5,7 @@
 - `python run_training.py baseline aspirin`
   starts training and validating the MLP baseline model on the Aspirin molecule from the MD17 dataset.
 
-- `python run_training.py md_17_ef uracil`
+- `python run_training.py md17_ef uracil`
   starts training and validating the PaiNN model on MD17 energies and forces for the Uracil molecule.
 
 - `python run_training.py qm9 energy_U0`
