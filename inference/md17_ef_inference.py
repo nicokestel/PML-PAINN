@@ -32,7 +32,12 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     best_model = torch.load(model_path, map_location=device)
     best_model.eval()
 
+    # remove add offsets postprocessor
+    nnp = [module for module in best_model.modules() if isinstance(module, spk.model.NeuralNetworkPotential)][0]
+    nnp.postprocessors.__delattr__('1')
+
     # load MD17 data
+    bs = 10
     dataset = load_data('md17',
                         molecule=molecule,
                         transformations=[
@@ -42,45 +47,39 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
                         ],
                         n_train=950,  # 950
                         n_val=50,  # 50
-                        batch_size=10,
+                        batch_size=bs,
                         work_dir=path_to_data_dir)
 
-   
-    n_test = i = 100
-
     # compute MAE
-    energy_avg_mae, forces_avg_mae = 0.0, 0.0
-    energy_avg_mse, forces_avg_mse = 0.0, 0.0
-    for _, batch in enumerate(dataset.test_dataloader()):
-        if i == 0:
-            break
+    split_metrics   = {'energy': 0.0, 'forces': 0.0}
+    metrics         = {'energy': 0.0, 'forces': 0.0}  # averaged over splits
 
+    n_splits = 3
+    n_test_batches_per_split = len(dataset.test_dataset) // bs // n_splits
+    print('length   test set:', len(dataset.test_dataset))
+    print('batches per split:', n_test_batches_per_split)
+    
+    for i, batch in enumerate(dataset.test_dataloader(), 1):
+
+        if i % 100 == 0:
+            print('batch', i)
+        
         results = best_model(copy.deepcopy(batch))
 
-        # Convert units
-        # results['energy'] *= convert_units("kcal/mol", "eV")
-
+        # Convert units [DON'T!! WE REPORT IN KCAL/MOL]
+        #results['energy'] *= convert_units("kcal/mol", "eV")
+        #results['forces'] *= convert_units("kcal/mol", "eV")
+        
         # MAE
-        energy_avg_mae += F.l1_loss(results['energy'], batch['energy'])
-        forces_avg_mae += F.l1_loss(results['forces'], batch['forces'])
+        split_metrics['energy'] += F.l1_loss(results['energy'], batch['energy'])
+        split_metrics['forces'] += F.l1_loss(results['forces'], batch['forces'])
 
-        # MSE
-        energy_avg_mse += F.mse_loss(results['energy'], batch['energy'])
-        forces_avg_mse += F.mse_loss(results['forces'], batch['forces'])
+        if i % n_test_batches_per_split == 0:
+            metrics['energy'] += split_metrics['energy'] / n_test_batches_per_split
+            metrics['forces'] += split_metrics['forces'] / n_test_batches_per_split
 
-        i -= 1
+    metrics['energy'] /= n_splits
+    metrics['forces'] /= n_splits
 
-
-    energy_avg_mae /= n_test
-    forces_avg_mae /= n_test
-    energy_avg_mse /= n_test
-    forces_avg_mse /= n_test
-
-    print('MAE on energy: {:.3f}'.format(
-        energy_avg_mae))
-    print('MAE on forces: {:.3f}'.format(
-        forces_avg_mae))
-    print('MSE on energy: {:.3f}'.format(
-        energy_avg_mse))
-    print('MSE on forces: {:.3f}'.format(
-        forces_avg_mse))
+    print('MAE\nenergy in [kcal/mol] and forces in [kcal/mol/Angstrom]')
+    print(metrics)
