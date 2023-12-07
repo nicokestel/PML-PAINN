@@ -25,7 +25,7 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
     """
 
     # set device
-    device = torch.device("cpu")
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # load model
     model_path = os.path.join(path_to_model)
@@ -64,7 +64,9 @@ def run(path_to_model, path_to_data_dir, molecule='ethanol'):
         if i % 100 == 0:
             print('batch', i)
         
-        results = best_model(copy.deepcopy(batch))
+        b = {k: v.to(device) for k, v in batch.items()}
+        results = best_model(b)
+        results = {k: v.to('cpu') for k, v in results.items()}
 
         # Convert units [DON'T!! WE REPORT IN KCAL/MOL]
         #results['energy'] *= convert_units("kcal/mol", "eV")
