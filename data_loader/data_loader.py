@@ -14,8 +14,7 @@ def load_data(dataset,
               n_train=None,
               n_val=None,
               batch_size=100,
-              work_dir=None,
-              load_forces_only=False):
+              work_dir=None):
     """Loads the specified dataset from SchNetPack.
 
     Args:
@@ -26,7 +25,6 @@ def load_data(dataset,
         n_val: number of samples in validation split (default: None).
         batch_size: number of samples per batch (default: 10).
         work_dir: the directory to store the dataset in (default: 'None).
-        load_forces_only: for MD17 decides if forces or forces and energies are loaded (default: False).
 
     Returns:
         the dataset object
@@ -45,8 +43,7 @@ def load_data(dataset,
                                 n_train=n_train,
                                 n_val=n_val,
                                 batch_size=batch_size,
-                                work_dir=work_dir,
-                                load_forces_only=load_forces_only)
+                                work_dir=work_dir)
 
     else:
         print('[ERROR] Dataset \'{}\' not supported! Choose one of {}.'.format(dataset, SUPPORTED_DATASETS))
@@ -125,7 +122,6 @@ def __load_md17_data(molecule='ethanol',
         n_val: number of samples in validation split (default: None).
         batch_size: number of samples per batch (default: 100).
         work_dir: the directory to store the dataset in (default: 'None).
-        load_forces_only: decides if forces or forces and energies are loaded (default: False).
 
     Returns:
         MD17 dataset object
@@ -148,7 +144,7 @@ def __load_md17_data(molecule='ethanol',
         num_workers=3,
         split_file=os.path.join(work_dir, molecule + "_split.npz"),
         pin_memory=True, # set to false, when not using a GPU
-        load_properties=[MD17.forces] if load_forces_only else [MD17.energy, MD17.forces]
+        load_properties=[MD17.energy, MD17.forces]
     )
     md17data.prepare_data()
     md17data.setup()

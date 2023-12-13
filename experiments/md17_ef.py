@@ -27,6 +27,8 @@ def run(molecule='ethanol', train_on_forces_only=False):
        ICML 2021, http://proceedings.mlr.press/v139/schutt21a.html
     """
 
+    force_error_weight = 1.0 if train_on_forces_only else 0.95
+
     # Load MD17 data
     work_dir = './md17_f' if train_on_forces_only else './md17_ef'
     md17data = load_data('md17',
@@ -39,8 +41,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
                          n_train=950,  # 950
                          n_val=50,  # 50
                          batch_size=10,
-                         work_dir=work_dir,
-                         load_forces_only=train_on_forces_only)
+                         work_dir=work_dir)
 
     # Model Setup (MD17)
     cutoff = 5.  # Angstrom
@@ -71,7 +72,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
     output_e = spk.task.ModelOutput(
         name=MD17.energy,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=0.05,
+        loss_weight=1.0 - force_error_weight,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
@@ -80,7 +81,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
     output_f = spk.task.ModelOutput(
         name=MD17.forces,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=0.95,
+        loss_weight=force_error_weight,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
