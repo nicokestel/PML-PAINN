@@ -14,7 +14,7 @@ import sys
 from experiments import *
 
 
-SUPPORTED_EXPERIMENTS = ['qm9', 'md17_ef', 'baseline']
+SUPPORTED_EXPERIMENTS = ['qm9', 'md17_f', 'md17_ef', 'baseline']
 
 
 if __name__ == '__main__':
@@ -27,6 +27,9 @@ if __name__ == '__main__':
     if expmt == 'md17_ef':
         molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
         md17_ef.run(molecule)
+    elif expmt == 'md17_f':
+        molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
+        md17_ef.run(molecule, train_on_forces_only=True)
     elif expmt == 'qm9':
         prop = sys.argv[2] if len(sys.argv) >= 3 else 'energy_U0'
         qm9.run(prop)

@@ -14,7 +14,7 @@ import pytorch_lightning as pl
 SUPPORTED_MOLECULES = ['aspirin', 'ethanol', 'malondialdehyde', 'napthalene', 'salicylic acid', 'toluene', 'uracil']
 
 
-def run(molecule='ethanol'):
+def run(molecule='ethanol', train_on_forces_only=False):
     """Loads the MD17 dataset, sets up the PaiNN model for the specified
         molecule and starts training with predefined hyperparameters.
 
@@ -28,7 +28,7 @@ def run(molecule='ethanol'):
     """
 
     # Load MD17 data
-    work_dir = './md17_ef'
+    work_dir = './md17_f' if train_on_forces_only else './md17_ef'
     md17data = load_data('md17',
                          molecule=molecule,
                          transformations=[
@@ -39,7 +39,8 @@ def run(molecule='ethanol'):
                          n_train=950,  # 950
                          n_val=50,  # 50
                          batch_size=10,
-                         work_dir=work_dir)
+                         work_dir=work_dir,
+                         load_forces_only=train_on_forces_only)
 
     # Model Setup (MD17)
     cutoff = 5.  # Angstrom
