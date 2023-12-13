@@ -30,7 +30,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
     force_error_weight = 1.0 if train_on_forces_only else 0.95
 
     # Load MD17 data
-    work_dir = './md17_f' if train_on_forces_only else './md17_ef'
+    work_dir = './md17_ef'
     md17data = load_data('md17',
                          molecule=molecule,
                          transformations=[
@@ -103,7 +103,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
     logger = pl.loggers.TensorBoardLogger(save_dir=work_dir)
     callbacks = [
         spk.train.ModelCheckpoint(
-            model_path=os.path.join(work_dir, "best_inference_model_" + molecule),
+            model_path=os.path.join(work_dir, "best_inference_model_" + molecule + ("_f" if train_on_forces_only else "")),
             save_top_k=1,
             monitor="val_loss"
         ),
