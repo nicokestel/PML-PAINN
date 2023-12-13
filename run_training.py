@@ -25,11 +25,13 @@ if __name__ == '__main__':
 
     expmt = sys.argv[1]
     if expmt == 'md17_ef':
-        molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
-        md17_ef.run(molecule)
+        for molecule in sys.argv[2:]:
+            print(f'running MD17 training on energies & forces for molecule={molecule}.')
+            md17_ef.run(molecule)
     elif expmt == 'md17_f':
-        molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
-        md17_ef.run(molecule, train_on_forces_only=True)
+        for molecule in sys.argv[2:]:
+            print(f'running MD17 training on forces for molecule={molecule}.')
+            md17_ef.run(molecule, train_on_forces_only=True)
     elif expmt == 'qm9':
         prop = sys.argv[2] if len(sys.argv) >= 3 else 'energy_U0'
         qm9.run(prop)
