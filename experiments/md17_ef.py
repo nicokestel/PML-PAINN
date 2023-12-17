@@ -120,3 +120,5 @@ def run(molecule='ethanol', train_on_forces_only=False):
         max_epochs=10000,
     )
     trainer.fit(task, datamodule=md17data)
+
+    return task.model
