@@ -1,0 +1,50 @@
+{
+    "best_inference_model_aspirin": {
+        "energy": 0.15386,
+        "forces": 0.35808
+    },
+    "best_inference_model_aspirin_f": {
+        "energy": 62.64192,
+        "forces": 0.30854
+    },
+    "best_inference_model_ethanol": {
+        "energy": 0.05577,
+        "forces": 0.17064
+    },
+    "best_inference_model_ethanol_f": {
+        "energy": 91.93182,
+        "forces": 0.16489
+    },
+    "best_inference_model_naphthalene": {
+        "energy": 0.12697,
+        "forces": 0.2356
+    },
+    "best_inference_model_naphthalene_f": {
+        "energy": 34.95678,
+        "forces": 0.06903
+    },
+    "best_inference_model_salicylic_acid": {
+        "energy": 0.11719,
+        "forces": 0.19308
+    },
+    "best_inference_model_salicylic_acid_f": {
+        "energy": 29.58411,
+        "forces": 0.15994
+    },
+    "best_inference_model_toluene": {
+        "energy": 0.09229,
+        "forces": 0.0891
+    },
+    "best_inference_model_toluene_f": {
+        "energy": 29.0233,
+        "forces": 0.07972
+    },
+    "best_inference_model_uracil": {
+        "energy": 0.10365,
+        "forces": 0.13035
+    },
+    "best_inference_model_uracil_f": {
+        "energy": 30.98888,
+        "forces": 0.13327
+    }
+}
