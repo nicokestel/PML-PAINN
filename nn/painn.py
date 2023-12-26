@@ -62,7 +62,7 @@ class PaiNNInteraction(nn.Module):
 
         dq, dmuR, dmumu = torch.split(x, self.n_atom_basis, dim=-1)
         dq = snn.scatter_add(dq, idx_i, dim_size=n_atoms)
-        dmu = dmuR * dir_ij[..., None] + dmumu * muj
+        dmu = dmuR * dir_ij[..., None] + dmumu * muj  # ABLATION2 dmumu = 0 => no vector propagation
         dmu = snn.scatter_add(dmu, idx_i, dim_size=n_atoms)
 
         q = q + dq
@@ -114,6 +114,7 @@ class PaiNNMixing(nn.Module):
         dq_intra, dmu_intra, dqmu_intra = torch.split(x, self.n_atom_basis, dim=-1)
         dmu_intra = dmu_intra * mu_W
 
+        # ABLATION1 remove scalar product of vector features in update block
         dqmu_intra = dqmu_intra * torch.sum(mu_V * mu_W, dim=1, keepdim=True)
 
         q = q + dq_intra + dqmu_intra
@@ -238,5 +239,5 @@ class PaiNN(nn.Module):
         q = q.squeeze(1)
 
         inputs["scalar_representation"] = q
-        inputs["vector_representation"] = mu
+        inputs["vector_representation"] = mu  # ABLATION3 set to zeros to remove vector features
         return inputs
