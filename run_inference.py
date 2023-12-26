@@ -31,21 +31,22 @@ if __name__ == '__main__':
 
     else:
         molecules = [sys.argv[3]] if len(sys.argv) >= 4 else ['ethanol']
-        if molecules == ['*']:
-            models = glob.glob('best_*')
+        if molecules == ['all']:
+            molecules = ['ethanol', 'naphthalene', 'salicylic_acid', 'toluene', 'uracil']
+            models = glob.glob('md17_ef/best_*')
         else:
             models = [sys.argv[1]]
         path_to_data_dir = sys.argv[2]
-
+        print(molecules, models)
         for molecule in molecules:
             for path_to_model in models:
                 if molecule in path_to_model:
-
+                    print(f'testing {path_to_model} on {molecule}')
                     metrics = md17_ef_inference.run(
                         path_to_model, path_to_data_dir, molecule=molecule)
         
                     # save test metrics to `test_results.json`
-                    test_results_file_path = os.path.join(path_to_data_dir, 'test_results.json')
+                    test_results_file_path = os.path.join(path_to_data_dir, 'testsuite_results.json')
                     if os.path.exists(test_results_file_path):
                         with open(test_results_file_path, 'r') as file:
                             test_results = json.load(file)

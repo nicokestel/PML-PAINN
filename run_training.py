@@ -39,7 +39,7 @@ if __name__ == '__main__':
         molecule = sys.argv[2] if len(sys.argv) >= 3 else 'ethanol'
         baseline.run(molecule)
     elif expmt == 'md17_ef_ablation':
-        md17_ef_ablation.run(ablation_level=sys.argv[2])
+        md17_ef_ablation.run(ablation_level=int(sys.argv[2]))
     else:
         print('[ERROR] experiment <{}> not supported! Choose one of {}'.format(expmt, SUPPORTED_EXPERIMENTS))
 
