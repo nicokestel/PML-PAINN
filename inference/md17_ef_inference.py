@@ -58,8 +58,8 @@ def run(model, path_to_data_dir, molecule='ethanol'):
     # compute MAE
     metrics = {'energy': 0.0, 'forces': 0.0}
 
-    # use 1000 batches for testing
-    n_batches = 1000
+    # use 10000 batches for testing
+    n_batches = 10000
 
     print('length test set:', n_batches * bs)
     
