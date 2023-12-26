@@ -233,12 +233,11 @@ class PaiNN(nn.Module):
         mu = torch.zeros((qs[0], 3, qs[2]), device=q.device)
 
         for i, (interaction, mixing) in enumerate(zip(self.interactions, self.mixing)):
-            q, mu = interaction(q, mu, filter_list[i], dir_ij, idx_i, idx_j, n_atoms)
-            q, mu = mixing(q, mu)
+            q, _ = interaction(q, mu, filter_list[i], dir_ij, idx_i, idx_j, n_atoms)
+            q, _ = mixing(q, mu)
 
         q = q.squeeze(1)
 
         inputs["scalar_representation"] = q
-        #inputs["vector_representation"] = mu  # ABLATION3 set to zeros to remove vector features
-        inputs["scalar_representation"] = torch.zeros((qs[0], 3, qs[2]), device=q.device)
+        inputs["vector_representation"] = mu  # ABLATION3 set to zeros to remove vector features
         return inputs

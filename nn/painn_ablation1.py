@@ -115,8 +115,7 @@ class PaiNNMixing(nn.Module):
         dmu_intra = dmu_intra * mu_W
 
         # ABLATION1 remove scalar product of vector features in update block
-        #dqmu_intra = dqmu_intra * torch.sum(mu_V * mu_W, dim=1, keepdim=True)
-        dqmu_intra = dqmu_intra * mu_V
+        dqmu_intra = dqmu_intra * torch.sum(mu_V, dim=1, keepdim=True)
 
         q = q + dq_intra + dqmu_intra
         mu = mu + dmu_intra
