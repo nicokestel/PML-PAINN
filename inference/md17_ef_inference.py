@@ -66,6 +66,9 @@ def run(model, path_to_data_dir, molecule='ethanol'):
     #dataset.test_dataset = dataset.test_dataset[:n_batches*bs]
     for i, batch in enumerate(dataset.test_dataloader()):
         
+        # keep terminal active and pipe alive
+        if i % 1000 == 0:
+            print(i)
         if i >= n_batches:
             break
 

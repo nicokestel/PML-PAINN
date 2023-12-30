@@ -1,5 +1,6 @@
 """
-https://github.com/atomistic-machine-learning/schnetpack/blob/master/src/schnetpack/representation/painn.py
+original implementation: https://github.com/atomistic-machine-learning/schnetpack/blob/master/src/schnetpack/representation/painn.py
+modifications: removed scalar product of vector features in update block (PaiNNMixing Module)
 """
 
 from typing import Callable, Dict, Optional
@@ -62,7 +63,7 @@ class PaiNNInteraction(nn.Module):
 
         dq, dmuR, dmumu = torch.split(x, self.n_atom_basis, dim=-1)
         dq = snn.scatter_add(dq, idx_i, dim_size=n_atoms)
-        dmu = dmuR * dir_ij[..., None] + dmumu * muj  # ABLATION2 dmumu = 0 => no vector propagation
+        dmu = dmuR * dir_ij[..., None] + dmumu * muj
         dmu = snn.scatter_add(dmu, idx_i, dim_size=n_atoms)
 
         q = q + dq
@@ -115,7 +116,7 @@ class PaiNNMixing(nn.Module):
         dmu_intra = dmu_intra * mu_W
 
         # ABLATION1 remove scalar product of vector features in update block
-        dqmu_intra = dqmu_intra * torch.sum(mu_V, dim=1, keepdim=True)
+        # dqmu_intra = dqmu_intra * torch.sum(mu_V * mu_W, dim=1, keepdim=True)
 
         q = q + dq_intra + dqmu_intra
         mu = mu + dmu_intra
@@ -239,5 +240,5 @@ class PaiNN(nn.Module):
         q = q.squeeze(1)
 
         inputs["scalar_representation"] = q
-        inputs["vector_representation"] = mu  # ABLATION3 set to zeros to remove vector features
+        inputs["vector_representation"] = mu
         return inputs
