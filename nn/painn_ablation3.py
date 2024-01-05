@@ -1,5 +1,6 @@
 """
-https://github.com/atomistic-machine-learning/schnetpack/blob/master/src/schnetpack/representation/painn.py
+orignal implementation: https://github.com/atomistic-machine-learning/schnetpack/blob/master/src/schnetpack/representation/painn.py
+modifications: removed scalar product of vector features in update block. removed convolution over vector features in message block.
 """
 
 from typing import Callable, Dict, Optional
@@ -29,7 +30,7 @@ class PaiNNInteraction(nn.Module):
 
         self.interatomic_context_net = nn.Sequential(
             snn.Dense(n_atom_basis, n_atom_basis, activation=activation),
-            snn.Dense(n_atom_basis, 3 * n_atom_basis, activation=None),
+            snn.Dense(n_atom_basis, 2 * n_atom_basis, activation=None),
         )
 
     def forward(
@@ -60,9 +61,9 @@ class PaiNNInteraction(nn.Module):
         muj = mu[idx_j]
         x = Wij * xj
 
-        dq, dmuR, dmumu = torch.split(x, self.n_atom_basis, dim=-1)
+        dq, dmuR = torch.split(x, self.n_atom_basis, dim=-1)
         dq = snn.scatter_add(dq, idx_i, dim_size=n_atoms)
-        dmu = dmuR * dir_ij[..., None] + dmumu * muj  # ABLATION2 dmumu = 0 => no vector propagation
+        dmu = dmuR * dir_ij[..., None]# + dmumu * muj  # ABLATION2 dmumu = 0 => no vector propagation
         dmu = snn.scatter_add(dmu, idx_i, dim_size=n_atoms)
 
         q = q + dq
@@ -115,7 +116,7 @@ class PaiNNMixing(nn.Module):
         dmu_intra = dmu_intra * mu_W
 
         # ABLATION1 remove scalar product of vector features in update block
-        dqmu_intra = dqmu_intra * torch.sum(mu_V * mu_W, dim=1, keepdim=True)
+        # dqmu_intra = dqmu_intra * torch.sum(mu_V * mu_W, dim=1, keepdim=True)
 
         q = q + dq_intra + dqmu_intra
         mu = mu + dmu_intra
@@ -178,7 +179,7 @@ class PaiNN(nn.Module):
         else:
             self.filter_net = snn.Dense(
                 self.radial_basis.n_rbf,
-                self.n_interactions * n_atom_basis * 3,
+                self.n_interactions * n_atom_basis * 2,
                 activation=None,
             )
 
@@ -226,7 +227,7 @@ class PaiNN(nn.Module):
         if self.share_filters:
             filter_list = [filters] * self.n_interactions
         else:
-            filter_list = torch.split(filters, 3 * self.n_atom_basis, dim=-1)
+            filter_list = torch.split(filters, 2 * self.n_atom_basis, dim=-1)
 
         q = self.embedding(atomic_numbers)[:, None]
         qs = q.shape
@@ -239,5 +240,5 @@ class PaiNN(nn.Module):
         q = q.squeeze(1)
 
         inputs["scalar_representation"] = q
-        inputs["vector_representation"] = mu  # ABLATION3 set to zeros to remove vector features
+        inputs["vector_representation"] = mu
         return inputs

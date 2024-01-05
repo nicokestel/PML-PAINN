@@ -1,0 +1,22 @@
+{
+    "ablation_lv1_model_aspirin": {
+        "energy": 0.21288,
+        "forces": 0.46401
+    },
+    "ablation_lv2_model_aspirin": {
+        "energy": 0.20165,
+        "forces": 0.41889
+    },
+    "ablation_lv3_model_aspirin": {
+        "energy": 0.19689,
+        "forces": 0.47387
+    },
+    "ablation_lv0_model_aspirin": {
+        "energy": 0.14899,
+        "forces": 0.34818
+    },
+    "ablation_lv4_model_aspirin": {
+        "energy": 0.575,
+        "forces": 0.90789
+    }
+}

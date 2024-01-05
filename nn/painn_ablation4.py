@@ -1,5 +1,6 @@
 """
-https://github.com/atomistic-machine-learning/schnetpack/blob/master/src/schnetpack/representation/painn.py
+original implementation: https://github.com/atomistic-machine-learning/schnetpack/blob/master/src/schnetpack/representation/painn.py
+modifications: no vector features
 """
 
 from typing import Callable, Dict, Optional
@@ -29,13 +30,13 @@ class PaiNNInteraction(nn.Module):
 
         self.interatomic_context_net = nn.Sequential(
             snn.Dense(n_atom_basis, n_atom_basis, activation=activation),
-            snn.Dense(n_atom_basis, 3 * n_atom_basis, activation=None),
+            snn.Dense(n_atom_basis, n_atom_basis, activation=None),
         )
 
     def forward(
         self,
         q: torch.Tensor,
-        mu: torch.Tensor,
+        #mu: torch.Tensor,
         Wij: torch.Tensor,
         dir_ij: torch.Tensor,
         idx_i: torch.Tensor,
@@ -57,18 +58,19 @@ class PaiNNInteraction(nn.Module):
         # inter-atomic
         x = self.interatomic_context_net(q)
         xj = x[idx_j]
-        muj = mu[idx_j]
+        #muj = mu[idx_j]
         x = Wij * xj
 
-        dq, dmuR, dmumu = torch.split(x, self.n_atom_basis, dim=-1)
+        #dq, _, _ = torch.split(x, self.n_atom_basis, dim=-1)
+        dq = x
         dq = snn.scatter_add(dq, idx_i, dim_size=n_atoms)
-        dmu = dmuR * dir_ij[..., None] + dmumu * muj  # ABLATION2 dmumu = 0 => no vector propagation
-        dmu = snn.scatter_add(dmu, idx_i, dim_size=n_atoms)
+        #dmu = dmuR * dir_ij[..., None] + dmumu * muj  # ABLATION2 dmumu = 0 => no vector propagation
+        #dmu = snn.scatter_add(dmu, idx_i, dim_size=n_atoms)
 
         q = q + dq
-        mu = mu + dmu
+        #mu = mu + dmu
 
-        return q, mu
+        return q
 
 
 class PaiNNMixing(nn.Module):
@@ -85,15 +87,18 @@ class PaiNNMixing(nn.Module):
         self.n_atom_basis = n_atom_basis
 
         self.intraatomic_context_net = nn.Sequential(
-            snn.Dense(2 * n_atom_basis, n_atom_basis, activation=activation),
-            snn.Dense(n_atom_basis, 3 * n_atom_basis, activation=None),
+            snn.Dense(n_atom_basis, n_atom_basis, activation=activation),
+            snn.Dense(n_atom_basis, 2 * n_atom_basis, activation=None),
         )
-        self.mu_channel_mix = snn.Dense(
-            n_atom_basis, 2 * n_atom_basis, activation=None, bias=False
-        )
+        #self.mu_channel_mix = snn.Dense(
+        #    n_atom_basis, 2 * n_atom_basis, activation=None, bias=False
+        #)
         self.epsilon = epsilon
 
-    def forward(self, q: torch.Tensor, mu: torch.Tensor):
+    def forward(self,
+        q: torch.Tensor,
+        #mu: torch.Tensor
+    ):
         """Compute intraatomic mixing.
 
         Args:
@@ -104,22 +109,23 @@ class PaiNNMixing(nn.Module):
             atom features after interaction
         """
         ## intra-atomic
-        mu_mix = self.mu_channel_mix(mu)
-        mu_V, mu_W = torch.split(mu_mix, self.n_atom_basis, dim=-1)
-        mu_Vn = torch.sqrt(torch.sum(mu_V**2, dim=-2, keepdim=True) + self.epsilon)
+        #mu_mix = self.mu_channel_mix(mu)
+        #mu_V, mu_W = torch.split(mu_mix, self.n_atom_basis, dim=-1)
+        #mu_Vn = torch.sqrt(torch.sum(mu_V**2, dim=-2, keepdim=True) + self.epsilon)
 
-        ctx = torch.cat([q, mu_Vn], dim=-1)
+        #ctx = torch.cat([q, mu_Vn], dim=-1)
+        ctx = q
         x = self.intraatomic_context_net(ctx)
 
-        dq_intra, dmu_intra, dqmu_intra = torch.split(x, self.n_atom_basis, dim=-1)
-        dmu_intra = dmu_intra * mu_W
+        dq_intra, dqmu_intra = torch.split(x, self.n_atom_basis, dim=-1)
+        #dmu_intra = dmu_intra * mu_W
 
         # ABLATION1 remove scalar product of vector features in update block
-        dqmu_intra = dqmu_intra * torch.sum(mu_V * mu_W, dim=1, keepdim=True)
+        #dqmu_intra = dqmu_intra * torch.sum(mu_V * mu_W, dim=1, keepdim=True)
 
         q = q + dq_intra + dqmu_intra
-        mu = mu + dmu_intra
-        return q, mu
+        #mu = mu + dmu_intra
+        return q
 
 
 class PaiNN(nn.Module):
@@ -178,7 +184,7 @@ class PaiNN(nn.Module):
         else:
             self.filter_net = snn.Dense(
                 self.radial_basis.n_rbf,
-                self.n_interactions * n_atom_basis * 3,
+                self.n_interactions * n_atom_basis,
                 activation=None,
             )
 
@@ -226,18 +232,18 @@ class PaiNN(nn.Module):
         if self.share_filters:
             filter_list = [filters] * self.n_interactions
         else:
-            filter_list = torch.split(filters, 3 * self.n_atom_basis, dim=-1)
+            filter_list = torch.split(filters, self.n_atom_basis, dim=-1)
 
         q = self.embedding(atomic_numbers)[:, None]
         qs = q.shape
-        mu = torch.zeros((qs[0], 3, qs[2]), device=q.device)
+        #mu = torch.zeros((qs[0], 3, qs[2]), device=q.device)
 
         for i, (interaction, mixing) in enumerate(zip(self.interactions, self.mixing)):
-            q, mu = interaction(q, mu, filter_list[i], dir_ij, idx_i, idx_j, n_atoms)
-            q, mu = mixing(q, mu)
+            q = interaction(q, filter_list[i], dir_ij, idx_i, idx_j, n_atoms)
+            q = mixing(q)
 
         q = q.squeeze(1)
 
         inputs["scalar_representation"] = q
-        inputs["vector_representation"] = mu  # ABLATION3 set to zeros to remove vector features
+        #inputs["vector_representation"] = mu
         return inputs

@@ -111,7 +111,8 @@ def __load_md17_data(molecule='ethanol',
                      n_train=None,
                      n_val=None,
                      batch_size=10,
-                     work_dir=None):
+                     work_dir=None,
+                     load_forces_only=False):
     """Loads the MD17 dataset from SchNetPack.
 
     Args:
@@ -142,8 +143,8 @@ def __load_md17_data(molecule='ethanol',
         transforms=transformations,
         num_workers=3,
         split_file=os.path.join(work_dir, molecule + "_split.npz"),
-        pin_memory=True # set to false, when not using a GPU
-        # load_properties=[MD17.energy, MD17.forces]
+        pin_memory=True, # set to false, when not using a GPU
+        load_properties=[MD17.energy, MD17.forces]
     )
     md17data.prepare_data()
     md17data.setup()

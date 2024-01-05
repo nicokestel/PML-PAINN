@@ -3,7 +3,11 @@ import schnetpack as spk
 from schnetpack.datasets import MD17
 import schnetpack.transform as trn
 
-from nn import PaiNN
+from nn.painn import PaiNN
+from nn.painn_ablation1 import PaiNN as PaiNN_abl1
+from nn.painn_ablation2 import PaiNN as PaiNN_abl2
+from nn.painn_ablation3 import PaiNN as PaiNN_abl3
+from nn.painn_ablation4 import PaiNN as PaiNN_abl4
 from data_loader import load_data
 
 import torch
@@ -11,15 +15,12 @@ import torchmetrics
 import pytorch_lightning as pl
 
 
-SUPPORTED_MOLECULES = ['aspirin', 'ethanol', 'malondialdehyde', 'napthalene', 'salicylic acid', 'toluene', 'uracil']
-
-
-def run(molecule='ethanol', train_on_forces_only=False):
+def run(ablation_level=0):
     """Loads the MD17 dataset, sets up the PaiNN model for the specified
         molecule and starts training with predefined hyperparameters.
 
     Args:
-        molecule: (default: 'ethanol')
+        ablation_level: (default: 0)
 
     References:
     .. [#painn1] Schütt, Unke, Gastegger:
@@ -27,12 +28,10 @@ def run(molecule='ethanol', train_on_forces_only=False):
        ICML 2021, http://proceedings.mlr.press/v139/schutt21a.html
     """
 
-    force_error_weight = 1.0 if train_on_forces_only else 0.95
-
     # Load MD17 data
     work_dir = './md17_ef'
     md17data = load_data('md17',
-                         molecule=molecule,
+                         molecule='aspirin',
                          transformations=[
                              trn.ASENeighborList(cutoff=5.),
                              trn.RemoveOffsets(MD17.energy, remove_mean=True, remove_atomrefs=False),
@@ -45,17 +44,46 @@ def run(molecule='ethanol', train_on_forces_only=False):
 
     # Model Setup (MD17)
     cutoff = 5.  # Angstrom
-    n_atom_basis = 128  # 128
+    n_atom_basis = [128, 134, 135, 142, 174][ablation_level]  # 128
     n_interactions = 3  # 3
 
     # calculates pairwise distances between atoms
     pairwise_distance = spk.atomistic.PairwiseDistances() # calculates pairwise distances between atoms
-    painn = PaiNN(
-        n_atom_basis=       n_atom_basis,
-        n_interactions=     n_interactions,
-        radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
-        cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
-    )
+    if ablation_level == 0:
+        painn = PaiNN(
+            n_atom_basis=       n_atom_basis,
+            n_interactions=     n_interactions,
+            radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
+            cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
+        )
+    elif ablation_level == 1:
+        painn = PaiNN_abl1(
+            n_atom_basis=       n_atom_basis,
+            n_interactions=     n_interactions,
+            radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
+            cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
+        )
+    elif ablation_level == 2:
+        painn = PaiNN_abl2(
+            n_atom_basis=       n_atom_basis,
+            n_interactions=     n_interactions,
+            radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
+            cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
+        )
+    elif ablation_level == 3:
+        painn = PaiNN_abl3(
+            n_atom_basis=       n_atom_basis,
+            n_interactions=     n_interactions,
+            radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
+            cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
+        )
+    elif ablation_level == 4:
+        painn = PaiNN_abl4(
+            n_atom_basis=       n_atom_basis,
+            n_interactions=     n_interactions,
+            radial_basis=       spk.nn.radial.GaussianRBF(n_rbf=20, cutoff=cutoff),
+            cutoff_fn=          spk.nn.cutoff.CosineCutoff(cutoff=cutoff)
+        )
 
     # prediction modules for energy and forces
     pred_e = spk.atomistic.Atomwise(n_in=n_atom_basis, output_key=MD17.energy)
@@ -72,7 +100,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
     output_e = spk.task.ModelOutput(
         name=MD17.energy,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=1.0 - force_error_weight,
+        loss_weight=0.05,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
@@ -81,7 +109,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
     output_f = spk.task.ModelOutput(
         name=MD17.forces,
         loss_fn=torch.nn.MSELoss(),
-        loss_weight=force_error_weight,
+        loss_weight=0.95,
         metrics={
             "MAE": torchmetrics.MeanAbsoluteError(),
             "RMSE": torchmetrics.MeanSquaredError(squared=False)
@@ -103,7 +131,7 @@ def run(molecule='ethanol', train_on_forces_only=False):
     logger = pl.loggers.TensorBoardLogger(save_dir=work_dir)
     callbacks = [
         spk.train.ModelCheckpoint(
-            model_path=os.path.join(work_dir, "best_inference_model_" + molecule + ("_f" if train_on_forces_only else "")),
+            model_path=os.path.join(work_dir, f"ablation_lv{ablation_level}_model_aspirin"),
             save_top_k=1,
             monitor="val_loss"
         ),
