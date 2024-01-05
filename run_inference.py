@@ -32,7 +32,7 @@ if __name__ == '__main__':
     else:
         molecules = [sys.argv[3]] if len(sys.argv) >= 4 else ['ethanol']
         if molecules == ['all']:
-            molecules = ['ethanol', 'naphthalene', 'salicylic_acid', 'toluene', 'uracil']
+            molecules = ['aspirin', 'ethanol', 'naphthalene', 'salicylic_acid', 'toluene', 'uracil']
             models = glob.glob('md17_ef/best_*')
         else:
             models = [sys.argv[1]]
@@ -46,7 +46,7 @@ if __name__ == '__main__':
                         path_to_model, path_to_data_dir, molecule=molecule)
         
                     # save test metrics to `test_results.json`
-                    test_results_file_path = os.path.join(path_to_data_dir, 'ablation_results.json')
+                    test_results_file_path = os.path.join(path_to_data_dir, 'testsuite_results.json')
                     if os.path.exists(test_results_file_path):
                         with open(test_results_file_path, 'r') as file:
                             test_results = json.load(file)
