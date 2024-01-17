@@ -3,6 +3,8 @@ import copy
 
 from data_loader import load_data
 
+import numpy as np
+
 import torch
 import torch.nn.functional as F
 
@@ -12,6 +14,10 @@ import schnetpack.transform as trn
 from schnetpack.datasets.md17 import MD17
 
 from schnetpack.units import convert_units
+
+from ase import Atoms
+
+import matplotlib.pyplot as plt
 
 
 def run(model, path_to_data_dir, molecule='ethanol'):
@@ -94,16 +100,18 @@ def run(model, path_to_data_dir, molecule='ethanol'):
     return metrics
 
 
-def predict(model, path_to_data_dir, molecule='ethanol'):
+def eval(model, path_to_data_dir, molecule='ethanol', sample_idx=0):
     """ Predicts test set labels of the specified PaiNN model on MD17.
 
         Args:
             model: path to where the model is stored or model object.
             path_to_data_dir: where the data is stored.
             molecule: (default: 'ethanol').
+            sample_idx: (default: 0)
 
         Returns:
-            test set predictions, i.e. energies and forces
+            predicted energies and forces for sample with index `sample_idx`
+            confidence measure
     """
 
     # set device
@@ -122,7 +130,6 @@ def predict(model, path_to_data_dir, molecule='ethanol'):
     #nnp.postprocessors.__delattr__('1')
 
     # load MD17 data
-    bs = 10
     dataset = load_data('md17',
                         molecule=molecule,
                         transformations=[
@@ -132,30 +139,44 @@ def predict(model, path_to_data_dir, molecule='ethanol'):
                         ],
                         n_train=950,  # 950
                         n_val=50,  # 50
-                        batch_size=bs,
+                        batch_size=10,
                         work_dir=path_to_data_dir)
     
-    # use 1000 batches for test label prediction
-    n_batches = 10
-    print('length test set:', n_batches * bs)
+    # set up converter
+    converter = spk.interfaces.AtomsConverter(
+        neighbor_list=trn.ASENeighborList(cutoff=5.), dtype=torch.float32, device=device
+    )
 
-    # predictions as batch-wise dict entries
-    predictions = {}
+    # create atoms object from dataset
+    #structure = dataset.test_dataset[sample_idx]
+    f_maes = []
 
-    #dataset.test_dataset = dataset.test_dataset[:n_batches*bs]
-    for i, batch in enumerate(dataset.test_dataloader()):
-        
-        if i >= n_batches:
-            break
+    for i in range(100000):
+        if (i+1) % 1000 == 0:
+            print(i+1, '/100000 done')
+        structure = dataset.test_dataset[i]
+        atoms = Atoms(
+            numbers=structure[spk.properties.Z], positions=structure[spk.properties.R]
+        )
 
-
-        b = {k: v.to(device) for k, v in batch.items()}
+        # convert atoms to SchNetPack inputs and perform prediction
+        inputs = converter(atoms)
+        b = {k: v.to(device) for k, v in inputs.items()}
         results = best_model(b)
         results = {k: v.to('cpu') for k, v in results.items()}
 
-        predictions[i] = results
-        
+        # forces mae
+        f_mae = torch.mean(torch.abs((results['forces'] - structure['forces'])))
+        f_maes.append(f_mae.item())
+    
+    #print(f_maes)
+    np.save(molecule + '_forces_maes', np.array(f_maes))
 
-    print('predictions on', len(predictions), 'test batches completed.')
+    plt.hist(f_maes)
+    plt.show()
 
-    return predictions
+    return results, None
+
+
+def predict(model, X):
+    pred = model(X)
