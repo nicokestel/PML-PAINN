@@ -32,27 +32,35 @@ if __name__ == '__main__':
     #else:
     #   models = [sys.argv[1]]
         
-    path_to_model = sys.argv[1]
+    paths_to_models = glob.glob(os.path.join(sys.argv[1], 'best_*'))
+    paths_to_models = [ptm for ptm in paths_to_models if ptm[-1] != 'f']  # remove models trained on forces only
     path_to_data_dir = sys.argv[2]
-    molecules = ['ethanol', 'naphthalene', 'salicylic_acid', 'toluene', 'uracil'] #sys.argv[3]
+    molecules = ['aspirin', 'ethanol', 'naphthalene', 'salicylic_acid', 'toluene', 'uracil'] #sys.argv[3]
     #sample_idx = int(sys.argv[4])
 
-    #for molecule in molecules:
-    #    print('running evaluation on {} with {}.'.format(molecule, path_to_model))
+    for molecule in molecules:
+        for path_to_model in paths_to_models:
+            if molecule in path_to_model:
+                print('running evaluation on {} with {}.'.format(molecule, path_to_model))
+            
+                maes_dict = md17_ef_inference.val_mean_std(
+                    path_to_model, path_to_data_dir, molecule=molecule)
 
-        #eval = md17_ef_inference.eval(
-        #    path_to_model, path_to_data_dir, molecule=molecule, sample_idx=sample_idx)
 
-    import matplotlib.pyplot as plt
-    import numpy as np
+        """import matplotlib.pyplot as plt
+        from statistics import NormalDist
+        import numpy as np
+        import seaborn as sns
 
-    f_maes = np.load('aspirin_forces_maes.npy')
-    print(f_maes.max(), f_maes.min(), f_maes.mean(), f_maes.std())
-    f_maes -= f_maes.mean()
-    f_maes /= f_maes.std()
-    plt.hist(f_maes, bins=200)
-    plt.axvline(1.94 * f_maes.std())
-    plt.axvline(-1.94 * f_maes.std())
-    plt.show()
-    
-    #print(eval)
+        f_maes = np.load('aspirin_forces_maes.npy')
+        npdf = NormalDist.from_samples(f_maes)
+
+        print(npdf.mean, npdf.stdev)
+        print(f_maes.max(), f_maes.min(), f_maes.mean(), f_maes.std())
+        #plt.hist(f_maes, bins=200, normed=True)
+        sns.histplot(f_maes, kde=True)
+        #plt.axvline(1.94 * f_maes.std())
+        #plt.axvline(-1.94 * f_maes.std())
+        plt.show()
+
+        #print(eval)"""

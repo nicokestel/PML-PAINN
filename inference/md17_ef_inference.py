@@ -100,7 +100,7 @@ def run(model, path_to_data_dir, molecule='ethanol'):
     return metrics
 
 
-def eval(model, path_to_data_dir, molecule='ethanol', sample_idx=0):
+def val_mean_std(model, path_to_data_dir, molecule='ethanol'):
     """ Predicts test set labels of the specified PaiNN model on MD17.
 
         Args:
@@ -126,8 +126,8 @@ def eval(model, path_to_data_dir, molecule='ethanol', sample_idx=0):
     best_model.eval()
 
     # remove add offsets postprocessor [ONLY REMOVE WHEN MEASURING ERRORS]
-    #nnp = [module for module in best_model.modules() if isinstance(module, spk.model.NeuralNetworkPotential)][0]
-    #nnp.postprocessors.__delattr__('1')
+    nnp = [module for module in best_model.modules() if isinstance(module, spk.model.NeuralNetworkPotential)][0]
+    nnp.postprocessors.__delattr__('1')
 
     # load MD17 data
     dataset = load_data('md17',
@@ -147,14 +147,11 @@ def eval(model, path_to_data_dir, molecule='ethanol', sample_idx=0):
         neighbor_list=trn.ASENeighborList(cutoff=5.), dtype=torch.float32, device=device
     )
 
-    # create atoms object from dataset
     #structure = dataset.test_dataset[sample_idx]
-    f_maes = []
+    e_maes, f_maes = [], []
 
-    for i in range(100000):
-        if (i+1) % 1000 == 0:
-            print(i+1, '/100000 done')
-        structure = dataset.test_dataset[i]
+    for i, structure in enumerate(dataset.val_dataset):
+        # create atoms object from dataset
         atoms = Atoms(
             numbers=structure[spk.properties.Z], positions=structure[spk.properties.R]
         )
@@ -165,17 +162,20 @@ def eval(model, path_to_data_dir, molecule='ethanol', sample_idx=0):
         results = best_model(b)
         results = {k: v.to('cpu') for k, v in results.items()}
 
-        # forces mae
+        # energy and forces mae
+        e_mae = torch.abs(results['energy'] - structure['energy'])
+        e_maes.append(e_mae.item())
         f_mae = torch.mean(torch.abs((results['forces'] - structure['forces'])))
         f_maes.append(f_mae.item())
     
     #print(f_maes)
-    np.save(molecule + '_forces_maes', np.array(f_maes))
+    import json
+    maes_dict = {'energy_maes': e_maes, 'forces_maes': f_maes}
+    with open(os.path.join(path_to_data_dir, molecule + '_ef_val_maes.json'), 'w') as maes_file:
+        json.dump(maes_dict, maes_file, indent=4)
 
-    plt.hist(f_maes)
-    plt.show()
 
-    return results, None
+    return maes_dict
 
 
 def predict(model, X):
