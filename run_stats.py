@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) < 3:
         print(
-            'USAGE: python run_eval.py <path-to-model> <path-to-data-dir> [molecule]')
+            'USAGE: python run_stats.py <path-to-models> <path-to-data-dir>')
         sys.exit(1)
 
 
