@@ -217,22 +217,25 @@ def predict(model,
     best_model.eval()
 
     # remove add offsets postprocessor [ONLY REMOVE WHEN MEASURING ERRORS]
-    nnp = [module for module in best_model.modules() if isinstance(module, spk.model.NeuralNetworkPotential)][0]
-    nnp.postprocessors.__delattr__('1')
+    #nnp = [module for module in best_model.modules() if isinstance(module, spk.model.NeuralNetworkPotential)][0]
+    #nnp.postprocessors.__delattr__('1')
 
     # load MD17 data
-    dataset = load_data('md17',
-                        molecule=molecule,
-                        transformations=[
-                            trn.ASENeighborList(cutoff=5.),
-                            trn.RemoveOffsets(MD17.energy, remove_mean=True, remove_atomrefs=False),
-                            trn.CastTo32()
-                        ],
-                        n_train=950,  # 950
-                        n_val=50,  # 50
-                        batch_size=10,
-                        work_dir=path_to_data_dir)
-    
+    if type(path_to_data_dir) is str:
+        dataset = load_data('md17',
+                            molecule=molecule,
+                            transformations=[
+                                trn.ASENeighborList(cutoff=5.),
+                                trn.RemoveOffsets(MD17.energy, remove_mean=True, remove_atomrefs=False),
+                                trn.CastTo32()
+                            ],
+                            n_train=950,  # 950
+                            n_val=50,  # 50
+                            batch_size=10,
+                            work_dir=path_to_data_dir)
+    else:
+        dataset = path_to_data_dir
+        
     # set up converter
     converter = spk.interfaces.AtomsConverter(
         neighbor_list=trn.ASENeighborList(cutoff=5.), dtype=torch.float32, device=device
