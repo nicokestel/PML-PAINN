@@ -90,7 +90,11 @@ if __name__ == '__main__':
         for v in [0.80, 0.90, 0.95]:
             plt.axvline(v, c='#E0833D' if v==0.95 else 'gray', linestyle='--')
             plt.axhline(v, c='#E0833D' if v==0.95 else 'gray', linestyle='--')
-        for mol in ['ethanol', 'uracil', 'toluene', 'naphthalene', 'aspirin', 'salicylic_acid']:
+        for mol in ['ethanol', 'uracil', 'toluene', 'naphthalene', 'reference', 'aspirin', 'salicylic_acid']:
+            if mol == 'reference':
+                plt.plot([0.80, 0.95], [0.80, 0.95], c='black', linewidth=.8)
+                plt.scatter([0.80, 0.90, 0.95], [0.80, 0.90, 0.95], marker='x', c='black', label='reference')
+                continue
             mol_dict = results[mol]
             analytical_ts = [float(ts) for ts in list(mol_dict.keys())]
             empirical_ts = [float(ts) for ts in list(mol_dict.values())]
@@ -101,6 +105,6 @@ if __name__ == '__main__':
 
         plt.xlabel('Analytical time-saving [%]')
         plt.ylabel('Empirical time-saving [%]')
-        plt.legend()
+        plt.legend(loc='lower right')
         #plt.show()
         plt.savefig('visuals/time_saving.svg', dpi=300, bbox_inches='tight')
