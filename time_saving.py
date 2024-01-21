@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
             print(analytical_ts, empirical_ts)
 
-            plt.plot(analytical_ts, empirical_ts, label=mol, color='#163B4E')
+            plt.plot(analytical_ts, empirical_ts, color='#163B4E')
 
         plt.xlabel('Analytical time-saving [%]')
         plt.ylabel('Empirical time-saving [%]')
