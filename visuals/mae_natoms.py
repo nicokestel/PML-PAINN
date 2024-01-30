@@ -30,8 +30,8 @@ if __name__ == '__main__':
 
     plt.figure(figsize=(9, 5))
     plt.plot(n_atoms, MAES, label='Our MS2 results', c='#163B4E')
-    plt.plot(n_atoms, MAES_ORG, label='Schütt et al. (2021)', c='#163B4E', linestyle='--')
-    plt.plot(n_atoms, MAES_KERNEL, label='FCHL19', c='#163B4E', linestyle=':')
+    plt.plot(n_atoms, MAES_ORG, label=f'Schütt et al. (2021), $r_s$={stats.spearmanr(n_atoms, MAES_ORG).statistic:.3f}, $p$={stats.spearmanr(n_atoms, MAES_ORG).pvalue:.3f}', c='#163B4E', linestyle='--')
+    plt.plot(n_atoms, MAES_KERNEL, label=f'FCHL19, \t\t  $r_s$={stats.spearmanr(n_atoms, MAES_KERNEL).statistic:.3f}, $p$={stats.spearmanr(n_atoms, MAES_KERNEL).pvalue:.3f}', c='#163B4E', linestyle=':')
 
 
     plt.xticks(n_atoms, [mol.replace('_', ' ').title() + f' ({n})' for mol, n in zip(MOLECULES, n_atoms)], rotation=45)
